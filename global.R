@@ -1,0 +1,5 @@
+source('modules/auxfn.R')
+source('modules/downPlot.R')
+source('modules/tabHier.R')
+source('modules/tabHierSparse.R')
+source('modules/tabBayClust.R')
