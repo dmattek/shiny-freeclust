@@ -127,7 +127,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
     
     br(),
     fluidRow(
-      column(3,
+      column(2,
              numericInput(
                ns('inMarginX'),
                'Margin below x-axis',
@@ -136,7 +136,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                width = 100
              )
       ),
-      column(3,
+      column(2,
              numericInput(
                ns('inMarginY'),
                'Margin right of y-axis',
@@ -145,7 +145,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                width = 100
              )
       ),
-      column(3,
+      column(2,
              numericInput(
                ns('inFontX'),
                'Font size row labels',
@@ -155,7 +155,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                step = 0.1
              )
       ),
-      column(3,
+      column(2,
         numericInput(
           ns('inFontY'),
           'Font size column labels',
@@ -164,6 +164,15 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
           width = 100,
           step = 0.1
         )
+      ),
+      column(2,
+             numericInput(
+               ns('inPlotHeight'),
+               'Display plot height',
+               value = 1000,
+               min = 100,
+               step = 100
+             )
       )
     ),
     br(),
@@ -266,7 +275,7 @@ clustHier <- function(input, output, session, dataMod) {
   # Hierarchical - display plot
   output$outPlotHier <- renderPlot({
     plotHier()
-  }, height = 800)
+  })
   
   # Hierarchical - download pdf
   callModule(downPlot, "downPlotHier",       paste0('clust_hierch_',
@@ -327,9 +336,9 @@ clustHier <- function(input, output, session, dataMod) {
   output$plotInt_ui <- renderUI({
     ns <- session$ns
     if (input$plotInt)
-      tagList(d3heatmapOutput(ns("outPlotInt")))
+      tagList(d3heatmapOutput(ns("outPlotInt"), height = paste0(input$inPlotHeight, "px")))
     else
-      tagList(plotOutput(ns('outPlotHier')))
+      tagList(plotOutput(ns('outPlotHier'), height = paste0(input$inPlotHeight, "px")))
   })
   
  

@@ -136,7 +136,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
     
     fluidRow(
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotHierSparMarginX'),
           'Margin below x-axis',
@@ -146,7 +146,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         )
       ),
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotHierSparMarginY'),
           'Margin right of y-axis',
@@ -156,7 +156,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         )
       ),
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotHierSparFontX'),
           'Font size row labels',
@@ -167,7 +167,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         )
       ),
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotHierSparFontY'),
           'Font size column labels',
@@ -176,6 +176,15 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
           width = 100,
           step = 0.1
         )
+      ),
+      column(2,
+             numericInput(
+               ns('inPlotHeight'),
+               'Display plot height',
+               value = 1000,
+               min = 100,
+               step = 100
+             )
       )
     ),
     br(),
@@ -355,7 +364,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   # Sparse Hierarchical - display plot
   output$outPlotHierSpar <- renderPlot({
     plotHierSpar()
-  }, height = 800)
+  })
   
   # Sparse Hierarchical - download pdf
   callModule(downPlot, "downPlotHierSpar", paste0('clust_hierchSparse_',  
@@ -433,9 +442,9 @@ clustHierSpar <- function(input, output, session, dataMod) {
     ns <- session$ns
     
     if (input$inPlotHierSparInteractive)
-      d3heatmapOutput(ns("plotHierSparInt"))
+      d3heatmapOutput(ns("plotHierSparInt"), height = paste0(input$inPlotHeight, "px"))
     else
-      plotOutput(ns('outPlotHierSpar'))
+      plotOutput(ns('outPlotHierSpar'), height = paste0(input$inPlotHeight, "px"))
   })
   
 }

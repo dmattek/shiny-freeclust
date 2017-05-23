@@ -79,7 +79,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
     
     fluidRow(
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotBayHmMarginX'),
           'Margin below x-axis',
@@ -89,7 +89,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
         )
       ),
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotBayHmMarginY'),
           'Margin right of y-axis',
@@ -99,7 +99,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
         )
       ),
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotBayHmFontX'),
           'Font size row labels',
@@ -110,7 +110,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
         )
       ),
       column(
-        3,
+        2,
         numericInput(
           ns('inPlotBayHmFontY'),
           'Font size column labels',
@@ -119,6 +119,15 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
           width = 100,
           step = 0.1
         )
+      ),
+      column(2,
+             numericInput(
+               ns('inPlotHeight'),
+               'Display plot height',
+               value = 1000,
+               min = 100,
+               step = 100
+             )
       )
     ),
     br(),
@@ -290,14 +299,11 @@ clustBay <- function(input, output, session, dataMod) {
     )
   }
   
+
   
   output$outPlotBayHm <- renderPlot({
     plotBayHm()
-  }, height = 800)
-  
-  output$outPlotBayImp <- renderPlot({
-    plotBayImp()
-  }, height = 800)
+  })
   
   output$plotBayInt <- renderD3heatmap({
     cat(file = stderr(), 'plotBayInt \n')
@@ -362,9 +368,9 @@ clustBay <- function(input, output, session, dataMod) {
     ns <- session$ns
     
     if (input$inPlotBayInteractive)
-      d3heatmapOutput(ns("plotBayInt"))
+      d3heatmapOutput(ns("plotBayInt"), height = paste0(input$inPlotHeight, "px"))
     else {
-      plotOutput(ns('outPlotBayHm'))
+      plotOutput(ns('outPlotBayHm'), height = paste0(input$inPlotHeight, "px"))
     }
   })
   
