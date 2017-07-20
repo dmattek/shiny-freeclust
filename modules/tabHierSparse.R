@@ -184,6 +184,13 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
                value = 1000,
                min = 100,
                step = 100
+             ),
+             numericInput(
+               ns('inPlotWidth'),
+               'Display plot width',
+               value = 800,
+               min = 100,
+               step = 100
              )
       )
     ),
@@ -442,9 +449,9 @@ clustHierSpar <- function(input, output, session, dataMod) {
     ns <- session$ns
     
     if (input$inPlotHierSparInteractive)
-      d3heatmapOutput(ns("plotHierSparInt"), height = paste0(input$inPlotHeight, "px"))
+      d3heatmapOutput(ns("plotHierSparInt"), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
     else
-      plotOutput(ns('outPlotHierSpar'), height = paste0(input$inPlotHeight, "px"))
+      plotOutput(ns('outPlotHierSpar'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
   })
   
 }

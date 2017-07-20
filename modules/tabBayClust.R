@@ -127,6 +127,13 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
                value = 1000,
                min = 100,
                step = 100
+             ),
+             numericInput(
+               ns('inPlotWidth'),
+               'Display plot width',
+               value = 800,
+               min = 100,
+               step = 100
              )
       )
     ),
@@ -368,9 +375,9 @@ clustBay <- function(input, output, session, dataMod) {
     ns <- session$ns
     
     if (input$inPlotBayInteractive)
-      d3heatmapOutput(ns("plotBayInt"), height = paste0(input$inPlotHeight, "px"))
+      d3heatmapOutput(ns("plotBayInt"), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
     else {
-      plotOutput(ns('outPlotBayHm'), height = paste0(input$inPlotHeight, "px"))
+      plotOutput(ns('outPlotBayHm'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
     }
   })
   

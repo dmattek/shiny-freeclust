@@ -172,6 +172,13 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                value = 1000,
                min = 100,
                step = 100
+             ),
+             numericInput(
+               ns('inPlotWidth'),
+               'Display plot width',
+               value = 800,
+               min = 100,
+               step = 100
              )
       )
     ),
@@ -336,9 +343,9 @@ clustHier <- function(input, output, session, dataMod) {
   output$plotInt_ui <- renderUI({
     ns <- session$ns
     if (input$plotInt)
-      tagList(d3heatmapOutput(ns("outPlotInt"), height = paste0(input$inPlotHeight, "px")))
+      tagList(d3heatmapOutput(ns("outPlotInt"), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px")))
     else
-      tagList(plotOutput(ns('outPlotHier'), height = paste0(input$inPlotHeight, "px")))
+      tagList(plotOutput(ns('outPlotHier'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px")))
   })
   
  
