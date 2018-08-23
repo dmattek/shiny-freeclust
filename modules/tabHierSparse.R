@@ -193,7 +193,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
     br(),
     
     
-    downPlotUI(ns('downPlotHierSpar'), "Download PDF"),
+    downPlotUI(ns('downPlotHierSparPNG'), "Download PNG"),
     
     br(),
     checkboxInput(ns('inPlotHierSparInteractive'), 'Interactive Plot?',  value = FALSE),
@@ -396,12 +396,19 @@ clustHierSpar <- function(input, output, session, dataMod) {
     plotHierSpar()
   })
   
-  # Sparse Hierarchical - download pdf
-  callModule(downPlot, "downPlotHierSpar", paste0('clust_hierchSparse_',  
-                                                  s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)],
-                                                  "_",
-                                                  s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)], '.pdf'), plotHierSpar)
+  createFnameHeatMap = reactive({
+    
+    paste0('clust_hierchSparse_',  
+           s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)],
+           "_",
+           s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)], '.png')
+    
+  })
   
+  # Sparse Hierarchical - download png
+  callModule(downPlot, "downPlotHierSparPNG", createFnameHeatMap, plotHierSpar)
+  
+
   # Sparse Hierarchical clustering (sparcl) interactive version
   output$plotHierSparInt <- renderD3heatmap({
     cat(file = stderr(), 'plotHierSparInt \n')

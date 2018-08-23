@@ -19,8 +19,8 @@ downPlotUI <- function(id, label = "Download Plot") {
         3,
         numericInput(
           ns('inPlotWidth'),
-          "Width",
-          17,
+          "Width (in)",
+          8.5,
           min = 1,
           width = 100
         )
@@ -29,32 +29,61 @@ downPlotUI <- function(id, label = "Download Plot") {
         3,
         numericInput(
           ns('inPlotHeight'),
-          "Height",
-          10,
+          "Height (in)",
+          11,
           min = 1,
           width = 100
         )
       ),
       column(6,
-             downloadButton(ns('downPlot'), 'PDF'))
+             uiOutput(ns('uiDownButton')))
     )
   )
 }
 
-downPlot <- function(input, output, session, in.fname, in.plot) {
-
+downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
+  
+  output$uiDownButton = renderUI({
+    ns <- session$ns
+    
+    if (in.fname() %like% 'pdf') {
+      downloadButton(ns('downPlot'), 'PDF')
+    } else {
+      downloadButton(ns('downPlot'), 'PNG')
+    }
+    
+  })
+  
   output$downPlot <- downloadHandler(
     filename = function() {
-      in.fname
+      cat(in.fname(), "\n")
+      in.fname()
     },
     
     content = function(file) {
-      pdf(file,
+      if (in.gg) {
+        ggsave(
+          file,
+          limitsize = FALSE,
+          in.plot(),
           width  = input$inPlotWidth,
-          height = input$inPlotHeight)
-      
-      in.plot()
-      dev.off()
+          height = input$inPlotHeight
+        )
+      } else {
+        if (in.fname() %like% 'pdf') {
+          pdf(file,
+              width  = input$inPlotWidth,
+              height = input$inPlotHeight)
+        } else {
+          png(file,
+              width  = input$inPlotWidth,
+              height = input$inPlotHeight, units = 'in', res = 300)
+        }
+        
+        
+        in.plot()
+        dev.off()
+      }
     }
   )
   

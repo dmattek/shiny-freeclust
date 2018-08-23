@@ -179,7 +179,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
       )
     ),
     br(),
-    downPlotUI(ns('downPlotHier'), "Download PDF"),
+    downPlotUI(ns('downPlotHierPNG'), "Download PNG"),
     
     br(),
     checkboxInput(ns('plotInt'), 
@@ -293,12 +293,18 @@ clustHier <- function(input, output, session, dataMod) {
   output$outPlotHier <- renderPlot({
     plotHier()
   })
+
+  createFnameHeatMap = reactive({
+    
+    paste0('clust_hierch_heatMap_',
+           s.cl.dist[as.numeric(input$selectDist)],
+           '_',
+           s.cl.linkage[as.numeric(input$selectLinkage)],
+           '.png')
+  })
   
-  # Hierarchical - download pdf
-  callModule(downPlot, "downPlotHier",       paste0('clust_hierch_',
-                                                    s.cl.dist[as.numeric(input$selectDist)],
-                                                    '_',
-                                                    s.cl.linkage[as.numeric(input$selectLinkage)], '.pdf'), plotHier)
+  # Hierarchical - download png
+  callModule(downPlot, "downPlotHierPNG", createFnameHeatMap, plotHier)
   
   # Hierarchical clustering - interactive version
   output$outPlotInt <- renderD3heatmap({
