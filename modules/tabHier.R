@@ -113,15 +113,10 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
           step = .1,
           ticks = TRUE
         ),
-        sliderInput(
-          ns('inGridColor'),
-          'Shade of grey for grid lines (0 - black, 1 - white)',
-          min = 0,
-          max = 1,
-          value = 0.6,
-          step = .1,
-          ticks = TRUE
-        )
+        checkboxInput(ns('inDispGrid'), 
+                      'Display grid lines', 
+                      TRUE),
+        uiOutput(ns('inGridColorUI'))
       )
     ),
     
@@ -265,9 +260,9 @@ clustHier <- function(input, output, session, dataMod) {
       density.info = "density",
       RowSideColors = col_labels,
       colRow = col_labels,
-      sepcolor = grey(input$inGridColor),
-      colsep = 1:ncol(in.dm),
-      rowsep = 1:nrow(in.dm),
+      sepcolor = if (input$inDispGrid) grey(input$inGridColor) else NULL,
+      colsep = if (input$inDispGrid) 1:ncol(in.dm) else NULL,
+      rowsep = if (input$inDispGrid) 1:nrow(in.dm) else NULL,
       cexRow = input$inFontX,
       cexCol = input$inFontY,
       main = paste(
@@ -338,7 +333,22 @@ clustHier <- function(input, output, session, dataMod) {
       show_grid = TRUE
     )
   })
-  
+ 
+  output$inGridColorUI <- renderUI({
+    ns <- session$ns
+    
+    if(input$inDispGrid) {
+      sliderInput(
+        ns('inGridColor'),
+        'Shade of grey for grid lines (0 - black, 1 - white)',
+        min = 0,
+        max = 1,
+        value = 0.6,
+        step = .1,
+        ticks = TRUE)
+    }
+  })
+   
   # Hierarchical - choose to display regular heatmap.2 or d3heatmap (interactive)
   output$plotInt_ui <- renderUI({
     ns <- session$ns

@@ -107,15 +107,11 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
           step = .1,
           ticks = TRUE
         ),
-        sliderInput(
-          ns('inPlotHierSparGridColor'),
-          'Shade of grey for grid lines (0 - black, 1 - white)',
-          min = 0,
-          max = 1,
-          value = 0.6,
-          step = .1,
-          ticks = TRUE
-        )
+        
+        checkboxInput(ns('inDispGrid'), 
+                      'Display grid lines', 
+                      TRUE),
+        uiOutput(ns('inGridColorUI'))
       )
     ),
     
@@ -352,9 +348,9 @@ clustHierSpar <- function(input, output, session, dataMod) {
       colRow = col_labels,
       colCol = loc.colcol,
       labCol = loc.colnames,
-      sepcolor = grey(input$inPlotHierSparGridColor),
-      colsep = 1:ncol(loc.dm),
-      rowsep = 1:nrow(loc.dm),
+      sepcolor = if (input$inDispGrid) grey(input$inPlotHierSparGridColor) else NULL,
+      colsep = if (input$inDispGrid) 1:ncol(loc.dm) else NULL,
+      rowsep = if (input$inDispGrid) 1:nrow(loc.dm) else NULL,
       cexRow = input$inPlotHierSparFontX,
       cexCol = input$inPlotHierSparFontY,
       main = paste(
@@ -442,6 +438,22 @@ clustHierSpar <- function(input, output, session, dataMod) {
       #labRow = rownames(dm.t),
       labCol = loc.colnames
     )
+  })
+
+  
+  output$inGridColorUI <- renderUI({
+    ns <- session$ns
+    
+    if(input$inDispGrid) {
+      sliderInput(
+        ns('inPlotHierSparGridColor'),
+        'Shade of grey for grid lines (0 - black, 1 - white)',
+        min = 0,
+        max = 1,
+        value = 0.6,
+        step = .1,
+        ticks = TRUE)
+    }
   })
   
   # Sparse Hierarchical - choose to display regulat heatmap.2 or d3heatmap (interactive)
