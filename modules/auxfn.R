@@ -61,3 +61,52 @@ userDataGen <- function() {
   
   return(loc.x)
 }
+
+# Return a dt with cell IDs and corresponding cluster assignments depending on dendrogram cut (in.k)
+# This one works wth dist & hclust pair
+# For sparse hierarchical clustering use getDataClSpar
+# Arguments:
+# in.dend  - dendrogram; usually output from as.dendrogram(hclust(distance_matrix))
+# in.k - level at which dendrogram should be cut
+
+getDataCl = function(in.dend, in.k) {
+  require(data.table)
+  cat(file = stderr(), 'getDataCl \n')
+  
+  loc.m = dendextend::cutree(in.dend, in.k, order_clusters_as_data = TRUE)
+  #print(loc.m)
+  
+  # The result of cutree containes named vector with names being cell id's
+  # THIS WON'T WORK with sparse hierarchical clustering because there, the dendrogram doesn't have original id's
+  loc.dt.cl = data.table(id = names(loc.m),
+                         cl = loc.m)
+  
+  #cat('===============\ndataCl:\n')
+  #print(loc.dt.cl)
+  return(loc.dt.cl)
+}
+
+
+# Return a dt with cell IDs and corresponding cluster assignments depending on dendrogram cut (in.k)
+# This one works with sparse hierarchical clustering!
+# Arguments:
+# in.dend  - dendrogram; usually output from as.dendrogram(hclust(distance_matrix))
+# in.k - level at which dendrogram should be cut
+# in.id - vector of cell id's
+
+getDataClSpar = function(in.dend, in.k, in.id) {
+  require(data.table)
+  cat(file = stderr(), 'getDataClSpar \n')
+  
+  loc.m = dendextend::cutree(in.dend, in.k, order_clusters_as_data = TRUE)
+  #print(loc.m)
+  
+  # The result of cutree containes named vector with names being cell id's
+  # THIS WON'T WORK with sparse hierarchical clustering because there, the dendrogram doesn't have original id's
+  loc.dt.cl = data.table(id = in.id,
+                         cl = loc.m)
+  
+  #cat('===============\ndataCl:\n')
+  #print(loc.dt.cl)
+  return(loc.dt.cl)
+}

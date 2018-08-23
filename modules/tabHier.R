@@ -91,7 +91,8 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
         ),
         checkboxInput(ns('selectKey'), 
                       'Plot colour key', 
-                      TRUE)
+                      TRUE),
+        downloadButton(ns('downCellCl'), 'Download CSV with cluster associations')
       ),
       column(
         6,
@@ -178,7 +179,6 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
       )
     ),
     br(),
-    
     downPlotUI(ns('downPlotHier'), "Download PDF"),
     
     br(),
@@ -210,10 +210,25 @@ clustHier <- function(input, output, session, dataMod) {
   })
   
   
+  # download a list of IDs with cluster assignments
+  output$downCellCl <- downloadHandler(
+    filename = function() {
+      paste0('clust_hierch_data_',
+             s.cl.dist[as.numeric(input$selectDist)],
+             '_',
+             s.cl.linkage[as.numeric(input$selectLinkage)], '.csv')
+    },
+    
+    content = function(file) {
+      write.csv(x = getDataCl(userFitDendHier(), input$inNclust), file = file, row.names = FALSE)
+    }
+  )
+  
+  
+  
   # Function instead of reactive as per:
   # http://stackoverflow.com/questions/26764481/downloading-png-from-shiny-r
   # This function is used to plot and to downoad a pdf
-  
   
   plotHier <- function() {
     cat(file = stderr(), 'plotHier \n')

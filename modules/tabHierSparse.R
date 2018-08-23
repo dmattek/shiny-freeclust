@@ -84,8 +84,8 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
           ticks = TRUE,
           round = TRUE
         ),
-        checkboxInput(ns('selectPlotHierSparKey'), 'Plot colour key', TRUE)
-        
+        checkboxInput(ns('selectPlotHierSparKey'), 'Plot colour key', TRUE),
+        downloadButton(ns('downCellClSpar'), 'Download CSV with cluster associations')
       ),
       
       column(
@@ -260,7 +260,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
     )
     return(sparsehc)
   })
-  
+
   
   userFitDendHierSpar <- reactive({
     cat(file = stderr(), 'userFitDendHierSpar \n')
@@ -274,6 +274,33 @@ clustHierSpar <- function(input, output, session, dataMod) {
     
     return(dend)
   })
+  
+  # return all IDs (created in dataMod)
+  # used when saving cluster associations in sparse hierarchical
+  # sparsehc doesn't return original rownames after clustering
+  getDataIDs <- reactive({
+    cat(file = stderr(), 'getDataIDs\n')
+    loc.m = dataMod()
+    
+    if (is.null(loc.m))
+      return(NULL)
+    else
+      return(rownames(loc.m))
+  })
+  
+  # download a list of IDs with cluster assignments
+  output$downCellClSpar <- downloadHandler(
+    filename = function() {
+      paste0('clust_hierchSpar_data_',
+             s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)],
+             '_',
+             s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)], '.csv')
+    },
+    
+    content = function(file) {
+      write.csv(x = getDataClSpar(userFitDendHierSpar(), input$inPlotHierSparNclust, getDataIDs()), file = file, row.names = FALSE)
+    }
+  )
   
   # Function instead of reactive as per:
   # http://stackoverflow.com/questions/26764481/downloading-png-from-shiny-r
