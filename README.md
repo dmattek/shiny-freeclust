@@ -1,8 +1,9 @@
 # FreeClust: clustering made easy
 
+A web-app for easy interactive clustering. Choose your clustering algortihms, play with parameters and plot results in a fully interactive fashion. The algortihms set include: classical hierarchical clustering, sparse hierarchical clustering and a model-based Bayesian approach tailored to cluster high-dimensional data (with many more variables than samples). FreeClust was published in [Analytical Chemistry](https://pubs.acs.org/doi/abs/10.1021/acs.analchem.7b02221.
+
 #### Running on the server
-This is source code of an interactive clustering web-app written in R/Shiny. A running instance can be found here:
-http://bioz-lcms-chromclust.bioz.unibas.ch:3838/shiny-freeclust
+This is source code of an interactive clustering web-app written in R/Shiny. A running instance can be accessed on [UniBas server](http://bioz-lcms-chromclust.bioz.unibas.ch:3838/shiny-freeclust) or at [shinyapps.io](https://macdobry.shinyapps.io/free-clust/).
 
 #### Running locally from RStudio
 After downloading the source code, open `server.R` or `ui.R` and click `Run App` button in the upper right corner of the window with the code. The following packages need to be installed before running this code:
