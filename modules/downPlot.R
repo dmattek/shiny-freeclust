@@ -15,27 +15,38 @@ downPlotUI <- function(id, label = "Download Plot") {
     h4(label),
     
     fluidRow(
+      # CSS to make label next to text input
+      # From: https://stackoverflow.com/a/45299050/1898713
+      tags$head(
+        tags$style(type="text/css", 
+                   "#inline label{ display: table-cell; text-align: center; vertical-align: middle; } #inline .form-group { display: table-row;}")
+      ),
+      
       column(
-        3,
-        numericInput(
-          ns('inPlotWidth'),
-          "Width (in)",
-          8.5,
-          min = 1,
-          width = 100
+        2,
+        tags$div(id = "inline", 
+                 numericInput(
+                   ns('inPlotWidth'),
+                   "Width [in]",
+                   8.5,
+                   min = 1,
+                   width = 100
+                 )
         )
       ),
       column(
-        3,
-        numericInput(
-          ns('inPlotHeight'),
-          "Height (in)",
-          11,
-          min = 1,
-          width = 100
+        2,
+        tags$div(id = "inline", 
+                 numericInput(
+                   ns('inPlotHeight'),
+                   "Height [in]",
+                   11,
+                   min = 1,
+                   width = 100
+                 )
         )
       ),
-      column(6,
+      column(2,
              uiOutput(ns('uiDownButton')))
     )
   )
@@ -46,7 +57,7 @@ downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
   output$uiDownButton = renderUI({
     ns <- session$ns
     
-    if (in.fname() %like% 'pdf') {
+    if (grepl("pdf", in.fname())) {
       downloadButton(ns('downPlot'), 'PDF')
     } else {
       downloadButton(ns('downPlot'), 'PNG')
@@ -70,7 +81,7 @@ downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
           height = input$inPlotHeight
         )
       } else {
-        if (in.fname() %like% 'pdf') {
+        if (grepl("pdf", in.fname())) {
           pdf(file,
               width  = input$inPlotWidth,
               height = input$inPlotHeight)

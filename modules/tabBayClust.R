@@ -15,38 +15,35 @@ require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(d3heatmap) # interactive heatmap
 require(bclust) # Bayesian clustering
+require(shinyBS) # for tooltips
+require(shinycssloaders) # for loader animations
 
+helpText.clBayes = c(alImportance = paste0("<p>Bayes weight (BW) calculated during clustering ",
+                                              "reflect the importance of data points in the clustering. ",
+                                              "The following labels are used to indicate the importance:",
+                                              "<li>Black - data point not taken into account</li>",
+                                              "<li><p, style=\"color:DodgerBlue;\">* - low, WF∈(0, 0.1]</p></li>",
+                                              "<li><p, style=\"color:MediumSeaGreen;\">** - medium, WF∈(0.1, 0.5]</p></li>",
+                                              "<li><p, style=\"color:Tomato;\">*** - high, WF∈(0.5, 1.0]</p></li>",
+                                              "</p><p>Nia and Davison (2012): ",
+                                              "<i>High-Dimensional Bayesian Clustering with Variable Selection: The R Package bclust</i>; ",
+                                              "Journal of Statistical Software 47(5).</p>"))
 
-l.col.pal = list(
-  "Spectral" = 'Spectral',
-  "White-Orange-Red" = 'OrRd',
-  "Yellow-Orange-Red" = 'YlOrRd',
-  "Reds" = "Reds",
-  "Oranges" = "Oranges",
-  "Greens" = "Greens",
-  "Blues" = "Blues"
-)
-
-# UI
+# UI ----
 clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
   ns <- NS(id)
   
   tagList(
     h4(
       "Bayesian clustering using ",
-      a("bclust", href = "https://cran.r-project.org/web/packages/bclust/index.html")
+      a("bclust", 
+        href = "https://cran.r-project.org/web/packages/bclust/index.html",
+        title="External link",
+        target = "_blank")
     ),
     p('The algorithm does not deal with missing values. Use conversion to zeroes in the right panel.'),
-    p(
-      'Column labels in the heat-map are additionally labeled according to their Bayes weight (\"importance\"):'
-    ),
-    tags$ol(
-      tags$li("Blue with \"-\" - variable not likely to participate in optimal clustering (negative weight)"),
-      tags$li("Black - low importance (weight factor in 1st quartile)"),
-      tags$li("Green with \"*\" - medium importance (weight factor in 2nd quartile)"),
-      tags$li("Orange with \"**\" - high importance (weight factor in 3rd quartile)"),
-      tags$li("Red with \"***\" - very high importance (weight factor in 4th quartile)")
-    ),
+    p("Columns in the heatmap labeled according to their ",
+      actionLink(ns("alImportance"), "importance.")),
     
     br(),
     fluidRow(
@@ -55,7 +52,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
                ns("selectPlotBayHmPalette"),
                label = "Select colour palette:",
                choices = l.col.pal,
-               selected = 'Spctral'
+               selected = 'Spectral'
              ),
              checkboxInput(ns('inPlotBayHmRevPalette'), 'Reverse colour palette', TRUE),
              checkboxInput(ns('selectPlotBayDend'),
@@ -67,7 +64,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
              uiOutput(ns('inPlotBayHmNclustSlider')),
              sliderInput(
                ns('inPlotBayHmGridColor'),
-               'Shade of grey for grid lines (0 - black, 1 - white)',
+               'Shade of grey for grid lines',
                min = 0,
                max = 1,
                value = 0.6,
@@ -149,8 +146,11 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
   )
 }
 
-# SERVER
+# SERVER ----
 clustBay <- function(input, output, session, dataMod) {
+  
+  ns = session$ns
+  
   userFitBclus <- reactive({
     cat(file = stderr(), 'userFitBclus \n')
     
@@ -208,7 +208,19 @@ clustBay <- function(input, output, session, dataMod) {
     )
   })
   
+
+  # Bayesian clustering - render plot
+  output$outPlotHier <- renderPlot({
+    plotHier()
+  })
   
+  createFnameHeatMap = reactive({
+    
+    return('clust_bayes.png')
+  })
+  
+  callModule(downPlot, "downPlotBayHM", createFnameHeatMap, plotBayHm)
+    
   plotBayHm <- function() {
     cat(file = stderr(), 'plotBayHm \n')
     
@@ -381,6 +393,9 @@ clustBay <- function(input, output, session, dataMod) {
     }
   })
   
-  callModule(downPlot, "downPlotBayHM", 'clust_bayesian_dend.pdf', plotBayHm)
-  
+  addPopover(session, 
+             ns("alImportance"),
+             title = "Variable importance",
+             content = helpText.clBayes[["alImportance"]],
+             trigger = "click")
   }

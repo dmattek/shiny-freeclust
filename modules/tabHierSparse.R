@@ -15,62 +15,56 @@ require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(d3heatmap) # interactive heatmap
 require(sparcl) # sparse hierarchical and k-means
+require(shinyBS) # for tooltips
+require(shinycssloaders) # for loader animations
 
-s.cl.spar.linkage = c("average",
-                      "complete", 
-                      "single",
-                      "centroid")
 
-s.cl.spar.dist = c("squared.distance","absolute.value")
+helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated during clustering ",
+                                              "reflect the importance of time points in the clustering. ",
+                                              "The following labels are used to indicate the importance:",
+                                              "<li>Black - time point not taken into account</li>",
+                                              "<li><p, style=\"color:DodgerBlue;\">* - low, WF∈(0, 0.1]</p></li>",
+                                              "<li><p, style=\"color:MediumSeaGreen;\">** - medium, WF∈(0.1, 0.5]</p></li>",
+                                              "<li><p, style=\"color:Tomato;\">*** - high, WF∈(0.5, 1.0]</p></li>",
+                                              "</p><p>Witten and Tibshirani (2010): ",
+                                              "<i>A framework for feature selection in clustering</i>; ",
+                                              "Journal of the American Statistical Association 105(490): 713-726.</p>"))
 
-l.col.pal = list(
-  "Spectral" = 'Spectral',
-  "White-Orange-Red" = 'OrRd',
-  "Yellow-Orange-Red" = 'YlOrRd',
-  "Reds" = "Reds",
-  "Oranges" = "Oranges",
-  "Greens" = "Greens",
-  "Blues" = "Blues"
-)
 
-# UI
+# UI ----
 clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
   ns <- NS(id)
   
   tagList(
     h4(
       "Sparse hierarchical clustering using ",
-      a("sparcl", href = "https://cran.r-project.org/web/packages/sparcl/")
+      a("sparcl", 
+        href = "https://cran.r-project.org/web/packages/sparcl/",
+        title="External link",
+        target = "_blank")
     ),
-    p(
-      'Column labels in the heat-map are additionally labeled according to their weight factor (\"importance\"):'
-    ),
-    tags$ol(
-      tags$li("Black - not taken into account"),
-      tags$li("Blue with \"*\" - low importance (weight factor in (0, 0.1])"),
-      tags$li("Green with \"**\" - medium importance (weight factor in (0.1, 0.5])"),
-      tags$li("Red with \"***\" - high importance (weight factor in (0.5, 1.0])")
-    ),
+    p("Columns in the heatmap labeled according to their ",
+      actionLink(ns("alImportance"), "importance.")),
     br(),
     fluidRow(
       column(
         6,
         selectInput(
-          ns("selectPlotHierSparLinkage"),
-          label = ("Select linkage method:"),
-          choices = list(
-            "Average" = 1,
-            "Complete" = 2,
-            "Single" = 3,
-            "Centroid" = 4
-          ),
+          ns("selectPlotHierSparDist"),
+          label = ("Dissimilarity measure:"),
+          choices = list("Euclidean" = "squared.distance",
+                         "Manhattan" = "absolute.value"),
           selected = 1
         ),
         selectInput(
-          ns("selectPlotHierSparDist"),
-          label = ("Select type of dissimilarity measure:"),
-          choices = list("Squared Distance" = 1,
-                         "Absolute Value" = 2),
+          ns("selectPlotHierSparLinkage"),
+          label = ("Linkage method"),
+          choices = list(
+            "Average"  = "average",
+            "Complete" = "complete",
+            "Single"   = "single",
+            "Centroid" = "centroid"
+          ),
           selected = 1
         ),
         checkboxInput(ns('selectPlotHierSparDend'), 'Plot dendrogram and re-order samples', TRUE),
@@ -100,7 +94,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         
         sliderInput(
           ns('inPlotHierSparNAcolor'),
-          'Shade of grey for NA values (0 - black, 1 - white)',
+          'Shade of grey for NA values',
           min = 0,
           max = 1,
           value = 0.8,
@@ -201,9 +195,10 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
   )
 }
 
-# SERVER
+# SERVER ----
 clustHierSpar <- function(input, output, session, dataMod) {
-
+  ns = session$ns
+  
   # UI for advanced options
   output$uiPlotHierSparNperms = renderUI({
     ns <- session$ns
@@ -248,15 +243,15 @@ clustHierSpar <- function(input, output, session, dataMod) {
       loc.dm,
       wbounds = NULL,
       nperms = ifelse(input$inHierSparAdv, input$inPlotHierSparNperms, 10),
-      dissimilarity = s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)]
+      dissimilarity = input$selectPlotHierSparDist
     )
     
     sparsehc <- HierarchicalSparseCluster(
       dists = perm.out$dists,
       wbound = perm.out$bestw,
       niter = ifelse(input$inHierSparAdv, input$inPlotHierSparNiter, 15),
-      method = s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)],
-      dissimilarity = s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)]
+      method = input$selectPlotHierSparLinkage,
+      dissimilarity = input$selectPlotHierSparDist
     )
     return(sparsehc)
   })
@@ -292,9 +287,9 @@ clustHierSpar <- function(input, output, session, dataMod) {
   output$downCellClSpar <- downloadHandler(
     filename = function() {
       paste0('clust_hierchSpar_data_',
-             s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)],
+             input$selectPlotHierSparDist,
              '_',
-             s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)], '.csv')
+             input$selectPlotHierSparLinkage, '.csv')
     },
     
     content = function(file) {
@@ -382,9 +377,9 @@ clustHierSpar <- function(input, output, session, dataMod) {
       cexCol = input$inPlotHierSparFontY,
       main = paste(
         "Distance measure: ",
-        s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)],
+        input$selectPlotHierSparDist,
         "\nLinkage method: ",
-        s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)]
+        input$selectPlotHierSparLinkage
       )
     )
     
@@ -398,10 +393,11 @@ clustHierSpar <- function(input, output, session, dataMod) {
   
   createFnameHeatMap = reactive({
     
-    paste0('clust_hierchSparse_',  
-           s.cl.spar.dist[as.numeric(input$selectPlotHierSparDist)],
+    paste0('clust_hierSparse_',  
+           input$selectPlotHierSparDist,
            "_",
-           s.cl.spar.linkage[as.numeric(input$selectPlotHierSparLinkage)], '.png')
+           input$selectPlotHierSparLinkage, 
+           '.png')
     
   })
   
@@ -481,7 +477,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
     if(input$inDispGrid) {
       sliderInput(
         ns('inPlotHierSparGridColor'),
-        'Shade of grey for grid lines (0 - black, 1 - white)',
+        'Shade of grey for grid lines',
         min = 0,
         max = 1,
         value = 0.6,
@@ -499,5 +495,14 @@ clustHierSpar <- function(input, output, session, dataMod) {
     else
       plotOutput(ns('outPlotHierSpar'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
   })
+  
+  
+  # Pop-overs ----
+  
+  addPopover(session, 
+             ns("alImportance"),
+             title = "Variable importance",
+             content = helpText.clHierSpar[["alImportance"]],
+             trigger = "click")
   
 }

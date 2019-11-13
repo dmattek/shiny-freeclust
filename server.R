@@ -8,9 +8,15 @@
 
 library(shiny)
 library(shinyjs) #http://deanattali.com/shinyjs/
+library(shinyBS) # for tooltips
+library(shinycssloaders) # for loader animations
 
+# colour of loader spinner (shinycssloaders)
+options(spinner.color="#00A8AA")
 
 shinyServer(function(input, output, session) {
+  useShinyjs()
+  
   # This is only set at session start
   # we use this as a way to determine which input was
   # clicked in the dataInBoth reactive

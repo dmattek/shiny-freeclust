@@ -1,3 +1,27 @@
+
+# list of palettes for the heatmap
+l.col.pal = list(
+  "Spectral" = 'Spectral',
+  "Red-Yellow-Green" = 'RdYlGn',
+  "Red-Yellow-Blue" = 'RdYlBu',
+  "Greys" = "Greys",
+  "Reds" = "Reds",
+  "Oranges" = "Oranges",
+  "Greens" = "Greens",
+  "Blues" = "Blues"
+)
+
+# list of palettes for the dendrogram
+l.col.pal.dend.2 = list(
+  "Colorblind 10" = 'Color Blind',
+  "Tableau 10" = 'Tableau 10',
+  "Tableau 20" = 'Tableau 20',
+  "Classic 10" = "Classic 10",
+  "Classic 20" = "Classic 20",
+  "Traffic 9" = 'Traffic',
+  "Seattle Grays 5" = 'Seattle Grays'
+)
+
 # From: https://www.r-bloggers.com/winsorization/
 winsor1 <- 
 function (x, fraction=.05)

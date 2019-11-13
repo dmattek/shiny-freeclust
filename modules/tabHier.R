@@ -15,26 +15,6 @@ require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(d3heatmap) # interactive heatmap
 
-s.cl.linkage = c("ward.D",
-                 "ward.D2",
-                 "single",
-                 "complete",
-                 "average",
-                 "mcquitty",
-                 "centroid")
-
-s.cl.dist = c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski")
-
-l.col.pal = list(
-  "Spectral" = 'Spectral',
-  "White-Orange-Red" = 'OrRd',
-  "Yellow-Orange-Red" = 'YlOrRd',
-  "Reds" = "Reds",
-  "Oranges" = "Oranges",
-  "Greens" = "Greens",
-  "Blues" = "Blues"
-)
-
 # UI
 clustHierUI <- function(id, label = "Hierarchical CLustering") {
   ns <- NS(id)
@@ -51,29 +31,24 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
         6,
         selectInput(
           ns("selectDist"),
-          label = ("Select distance method:"),
-          choices = list(
-            "Euclidean" = 1,
-            "Maximum" = 2,
-            "Manhattan" = 3,
-            "Canberra" = 4,
-            "Binary" = 5,
-            "Minkowski" = 6
-          ),
+          label = ("Distance method"),
+          choices = list("Euclidean" = "euclidean",
+                           "Manhattan" = "manhattan",
+                           "Maximum"   = "maximum",
+                           "Canberra"  = "canberra"),
           selected = 1
-        ),
+          ),
         selectInput(
           ns("selectLinkage"),
-          label = ("Select linkage method:"),
+          label = ("Linkage method"),
           choices = list(
-            "Ward" = 1,
-            "Ward D2" = 2,
-            "Single" = 3,
-            "Complete" = 4,
-            "Average" = 5,
-            "McQuitty" = 6,
-            "Centroid" = 7
-          ),
+            "Average"  = "average",
+            "Complete" = "complete",
+            "Single"   = "single",
+            "Centroid" = "centroid",
+            "Ward"     = "ward.D",
+            "Ward D2"  = "ward.D2",
+            "McQuitty" = "mcquitty"),
           selected = 1
         ),
         checkboxInput(ns('selectDend'), 
@@ -107,7 +82,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                       TRUE),
         sliderInput(
           ns('inNAcolor'),
-          'Shade of grey for NA values (0 - black, 1 - white)',
+          'Shade of grey for NA values',
           min = 0,
           max = 1,
           value = 0.8,
@@ -200,8 +175,8 @@ clustHier <- function(input, output, session, dataMod) {
     if (is.null(loc.dm))
       return(NULL)
     
-    loc.cl.dist = dist(loc.dm,  method = s.cl.dist[as.numeric(input$selectDist)])
-    loc.cl.hc = hclust(loc.cl.dist, method = s.cl.linkage[as.numeric(input$selectLinkage)])
+    loc.cl.dist = dist(loc.dm,  method = input$selectDist)
+    loc.cl.hc = hclust(loc.cl.dist, method = input$selectLinkage)
     
     loc.dend <- as.dendrogram(loc.cl.hc)
     loc.dend <- color_branches(loc.dend, k = input$inNclust)
@@ -214,9 +189,10 @@ clustHier <- function(input, output, session, dataMod) {
   output$downCellCl <- downloadHandler(
     filename = function() {
       paste0('clust_hierch_data_',
-             s.cl.dist[as.numeric(input$selectDist)],
+             input$selectDist,
              '_',
-             s.cl.linkage[as.numeric(input$selectLinkage)], '.csv')
+             input$selectLinkage, 
+             '.csv')
     },
     
     content = function(file) {
@@ -282,9 +258,9 @@ clustHier <- function(input, output, session, dataMod) {
       cexCol = input$inFontY,
       main = paste(
         "Distance measure: ",
-        s.cl.dist[as.numeric(input$selectDist)],
+        input$selectDist,
         "\nLinkage method: ",
-        s.cl.linkage[as.numeric(input$selectLinkage)]
+        input$selectLinkage
       )
     )
   }
@@ -296,10 +272,10 @@ clustHier <- function(input, output, session, dataMod) {
 
   createFnameHeatMap = reactive({
     
-    paste0('clust_hierch_heatMap_',
-           s.cl.dist[as.numeric(input$selectDist)],
+    paste0('clust_hier_',
+           input$selectDist,
            '_',
-           s.cl.linkage[as.numeric(input$selectLinkage)],
+           input$selectLinkage,
            '.png')
   })
   
@@ -361,7 +337,7 @@ clustHier <- function(input, output, session, dataMod) {
     if(input$inDispGrid) {
       sliderInput(
         ns('inGridColor'),
-        'Shade of grey for grid lines (0 - black, 1 - white)',
+        'Shade of grey for grid lines',
         min = 0,
         max = 1,
         value = 0.6,
