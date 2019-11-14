@@ -6,11 +6,11 @@
 library(shinycssloaders) # for loader animations
 library(shinyBS) # for tooltips
 
+library(data.table)
 library(factoextra) # extract and visualize the output of multivariate data analyses 
 library(ggplot2)
 library(ggthemes)
-library(proxy) 
-library(data.table)
+library(proxy)
 library(dtw)
 
 helpText.clValid = c(alertClValidNAsPresent = paste0("NAs present. The selected distance measure will work, ",
