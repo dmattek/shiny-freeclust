@@ -1,4 +1,7 @@
-# RShiny module for performing Bayesian  clustering using bclust
+# Free-Clust: Shiny app for clustering datas data
+# Author: Maciej Dobrzynski
+#
+# RShiny module for performing Bayesian clustering using bclust
 # Use:
 # in ui.R
 # tabPanel(
@@ -7,7 +10,8 @@
 #
 # in server.R
 # callModule(clustBay, 'TabClustBay', dataMod)
-# where dataMod is the output from a reactive function that returns dataset ready for clustering
+# where dataMod is the output from a reactive function 
+# that returns a dataset in wide format ready for clustering
 
 
 require(gplots) # heatmap.2
@@ -47,30 +51,32 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
     
     br(),
     fluidRow(
-      column(6,
+      column(3,
+             checkboxInput(ns('selectPlotBayDend'),
+                           'Plot dendrogram and re-order samples', TRUE),
+             uiOutput(ns('inPlotBayHmNclustSlider'))
+      ),
+      column(3,
              selectInput(
-               ns("selectPlotBayHmPalette"),
-               label = "Select colour palette:",
+               ns("selectPlotBayPalette"),
+               label = "Heatmap\'s colour palette:",
                choices = l.col.pal,
                selected = 'Spectral'
              ),
-             checkboxInput(ns('inPlotBayHmRevPalette'), 'Reverse colour palette', TRUE),
-             checkboxInput(ns('selectPlotBayDend'),
-                           'Plot dendrogram and re-order samples', TRUE),
+             selectInput(
+               ns("selectPlotBayPaletteDend"),
+               label = "Dendrogram\'s colour palette",
+               choices = l.col.pal.dend,
+               selected = 'Color Blind'
+             ),
+             checkboxInput(ns('inPlotBayRevPalette'), 'Reverse colour palette', TRUE),
              checkboxInput(ns('selectPlotBayKey'), 'Plot colour key', TRUE)
-             
       ),
-      column(6,
-             uiOutput(ns('inPlotBayHmNclustSlider')),
-             sliderInput(
-               ns('inPlotBayHmGridColor'),
-               'Shade of grey for grid lines',
-               min = 0,
-               max = 1,
-               value = 0.6,
-               step = .1,
-               ticks = TRUE
-             )
+      column(3,
+             checkboxInput(ns('inDispGrid'), 
+                           'Display grid lines', 
+                           TRUE),
+             uiOutput(ns('inGridColorUI'))
       )
     ),
     
@@ -79,7 +85,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
         2,
         numericInput(
           ns('inPlotBayHmMarginX'),
-          'Margin below x-axis',
+          'Bottom margin',
           10,
           min = 1,
           width = 100
@@ -89,7 +95,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
         2,
         numericInput(
           ns('inPlotBayHmMarginY'),
-          'Margin right of y-axis',
+          'Right margin',
           10,
           min = 1,
           width = 100
@@ -168,9 +174,18 @@ clustBay <- function(input, output, session, dataMod) {
     if (is.null(d.bclus))
       return(NULL)
     
+    # number of clusters at which dendrogram is cut
+    loc.k = input$inPlotBayHmNclust
+    
+    # make a palette with the amount of colours equal to the number of clusters
+    #loc.col = get(input$selectPlotHierPaletteDend)(n = loc.k)
+    loc.col = ggthemes::tableau_color_pal(input$selectPlotBayPaletteDend)(n = loc.k)
+    
     dend <- as.dendrogram(d.bclus)
     #    dend <- color_branches(dend, k = d.bclus$optim.clustno)
-    dend <- color_branches(dend, k = input$inPlotBayHmNclust)
+    dend <- color_branches(dend, 
+                           col = loc.col,
+                           k = loc.k)
     #    browser()
   })
   
@@ -198,7 +213,7 @@ clustBay <- function(input, output, session, dataMod) {
     
     sliderInput(
       ns('inPlotBayHmNclust'),
-      '#clusters to colour (default: optimal # from bclust)',
+      'Number of dendrogram branches to cut (default: optimal from bclust)',
       min = 1,
       max = nrow(loc.dm),
       value = loc.d.bclus$optim.clustno,
@@ -239,12 +254,12 @@ clustBay <- function(input, output, session, dataMod) {
     col_labels <- get_leaves_branches_col(loc.dend)
     col_labels <- col_labels[order(order.dendrogram(loc.dend))]
     
-    if (input$inPlotBayHmRevPalette)
+    if (input$inPlotBayRevPalette)
       my_palette <-
-      rev(colorRampPalette(brewer.pal(9, input$selectPlotBayHmPalette))(n = 99))
+      rev(colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99))
     else
       my_palette <-
-      colorRampPalette(brewer.pal(9, input$selectPlotBayHmPalette))(n = 99)
+      colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99)
     
     if (input$selectPlotBayDend) {
       assign("var.tmp.1", loc.dend)
@@ -286,14 +301,30 @@ clustBay <- function(input, output, session, dataMod) {
       colRow = col_labels,
       colCol = loc.colcol,
       labCol = loc.colnames,
-      sepcolor = grey(input$inPlotBayHmGridColor),
-      colsep = 1:ncol(loc.dm),
-      rowsep = 1:nrow(loc.dm),
+      sepcolor = if (input$inDispGrid) grey(input$inPlotBayHmGridColor) else NULL,
+      colsep = if (input$inDispGrid) 1:ncol(loc.dm) else NULL,
+      rowsep = if (input$inDispGrid) 1:nrow(loc.dm) else NULL,
       cexRow = input$inPlotBayHmFontX,
       cexCol = input$inPlotBayHmFontY,
       main = "Bayesian Clustering (bclust)"
     )
   }
+  
+  output$inGridColorUI <- renderUI({
+    ns <- session$ns
+    
+    if(input$inDispGrid) {
+      sliderInput(
+        ns('inPlotBayHmGridColor'),
+        'Shade of grey for grid lines',
+        min = 0,
+        max = 1,
+        value = 0.6,
+        step = .1,
+        ticks = TRUE)
+    }
+  })
+  
   
   plotBayImp <- function() {
     cat(file = stderr(), 'plotBayImp \n')
@@ -342,12 +373,12 @@ clustBay <- function(input, output, session, dataMod) {
     col_labels <- get_leaves_branches_col(loc.dend)
     col_labels <- col_labels[order(order.dendrogram(loc.dend))]
     
-    if (input$inPlotBayHmRevPalette)
+    if (input$inPlotBayRevPalette)
       my_palette <-
-      rev(colorRampPalette(brewer.pal(9, input$selectPlotBayHmPalette))(n = 99))
+      rev(colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99))
     else
       my_palette <-
-      colorRampPalette(brewer.pal(9, input$selectPlotBayHmPalette))(n = 99)
+      colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99)
     
     if (input$selectPlotBayDend) {
       assign("var.tmp.1", loc.dend)

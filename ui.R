@@ -10,7 +10,7 @@
 
 library(shiny)
 library(shinyjs) #http://deanattali.com/shinyjs/
-
+library(shinyBS)
 
 shinyUI(fluidPage(
   useShinyjs(),
@@ -24,7 +24,7 @@ shinyUI(fluidPage(
       # Load data
       fileInput(
         'fileDataLoad',
-        'Select data file and click Load Data',
+        actionLink("alDataFormat", 'Select file and click Load Data'),
         accept = c('text/csv', 'text/comma-separated-values,text/plain')
       ),
       radioButtons(
@@ -52,10 +52,6 @@ shinyUI(fluidPage(
         selected = '.'
       ),
       actionButton("butDataLoad",  'Load Data'),
-      bsTooltip("butDataLoad", 
-                "Accepts CSV text file with samples as columns, measurements (features) as rows. First row should contain samples\' names; first column should contain features\' names'",
-                placement = "top",
-                trigger = "hover"),
       
       actionButton("butDataGen1", 'Synthetic data'),
       bsTooltip("butDataGen1", 
@@ -82,7 +78,7 @@ shinyUI(fluidPage(
                     'Rescale data',
                     FALSE),
       bsTooltip("chBdataScale", 
-                "For every species: subtract the mean, divide by STD. This is equivalent to Z-score.",
+                "For every measurement (not sample!) subtract the mean, divide by SD. This is equivalent to calculating a z-score.",
                 placement = "top",
                 trigger = "hover"),
       
@@ -91,9 +87,11 @@ shinyUI(fluidPage(
                     'Take log10 of data',
                     FALSE),
       bsTooltip("chBdataLog", 
-                "Transform your data with log10. Missing fields or missing fields converted to 0 are omitted in this transformation.",
+                "Transform data with log10. Negative values and zeroes are changed to missing data points.",
                 placement = "top",
                 trigger = "hover"),
+      bsAlert("alertAnchorNegPresent"),
+      
       
       checkboxInput('chBdataWinsor2',
                     'Winsorise data',
@@ -130,22 +128,8 @@ shinyUI(fluidPage(
         
         # Show a plot of the distribution
         tabPanel(
-          'Data histogram',
-          br(),
-          p(
-            'Overview of your data. Avoid long tails or strong assymetries in the histogram by converting your data to Z-scores,
-          taking logarithm of data, or by removing the outliers.'
-          ),
-          br(),
-          sliderInput(
-            'slHistBinN',
-            'Set the number of histogram bins',
-            min = 1,
-            max = 100,
-            value = 10,
-            step = 1
-          ),
-          plotOutput('plotHist', width = '100%')
+          'Histogram',
+          dataHistUI('TabDataHist')
         ),
         
         # Hierarchical clustering (hclust)
@@ -164,7 +148,14 @@ shinyUI(fluidPage(
         tabPanel(
           'Bayesian',
           clustBayUI('TabClustBay')
+        ),
+        
+        # cluster validation
+        tabPanel(
+          'Validation',
+          clustValidUI('TabClValid')
         )
+        
       )
     )
   )))

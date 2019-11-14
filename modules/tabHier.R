@@ -1,4 +1,8 @@
-# RShiny module for performing hierarchical clustering
+#
+# Free-Clust: Shiny app for clustering datas data
+# Author: Maciej Dobrzynski
+#
+# This module is a tab for hierarchical clustering (base R hclust + dist)
 # Use:
 # in ui.R
 # tabPanel(
@@ -7,7 +11,8 @@
 #
 # in server.R
 # callModule(clustHier, 'TabClustHier', dataMod)
-# where dataMod is the output from a reactive function that returns dataset ready for clustering
+# where dataMod is the output from a reactive function 
+# that returns a dataset in wide format ready for clustering
 
 
 require(gplots) # heatmap.2
@@ -15,29 +20,53 @@ require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(d3heatmap) # interactive heatmap
 
+helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the dataset. DTW cannot calculate the distance. "),
+                    alertNAsPresentCl = paste0("NAs (still) present in the dataset, caution recommended."),
+                    alertNAsPresentDist = "Calculation of the distance matrix yielded NAs. Dataset might be too sparse",
+                    alLearnMore = paste0("<p><a href=\"https://en.wikipedia.org/wiki/Hierarchical_clustering\" target=\"_blank\" title=\"External link\">Agglomerative hierarchical clustering</a> ",
+                                         "initially assumes that all data points are forming their own clusters. It then grows a clustering dendrogram using two inputs:<p>",
+                                         "A <b>dissimilarity matrix</b> between sample pairs ",
+                                         "is calculated with one of the metrics, such as ",
+                                         "Euclidean (<a href=\"https://en.wikipedia.org/wiki/Euclidean_distance\" target=\"_blank\" title=\"External link\">L2 norm</a>), or ",
+                                         "Manhattan (<a href=\"https://en.wikipedia.org/wiki/Taxicab_geometry\" target=\"_blank\" title=\"External link\">L1 norm</a>).</p>",
+                                         "<p>In the second step, clusters are successively built and merged together. The distance between the newly formed clusters is determined by the <b>linkage criterion</b> ",
+                                         "using one of <a href=\"https://en.wikipedia.org/wiki/Hierarchical_clustering\" target=\"_blank\" title=\"External link\">linkage methods</a>.</p>"))
+
 # UI
 clustHierUI <- function(id, label = "Hierarchical CLustering") {
   ns <- NS(id)
   
   tagList(
-    h4(
-      "Hierarchical clustering using standard",
-      a("hclust", href = "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html")
+    h4('Hierarchical clustering'),
+    p("Standard approach using R's ",
+      a("dist", 
+        href = "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/dist.html",
+        title ="External link",
+        target = "_blank"),
+      " and ",
+      a("hclust", 
+        href = "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html",
+        title = "External link", 
+        target = "_blank"),
+      " functions. ",
+      actionLink(ns("alLearnMore"), "Learn more")
     ),
     br(),
     
     fluidRow(
       column(
-        6,
+        3,
         selectInput(
           ns("selectDist"),
-          label = ("Distance method"),
+          label = ("Dissimilarity measure"),
           choices = list("Euclidean" = "euclidean",
-                           "Manhattan" = "manhattan",
-                           "Maximum"   = "maximum",
-                           "Canberra"  = "canberra"),
+                         "Manhattan" = "manhattan",
+                         "Maximum"   = "maximum",
+                         "Canberra"  = "canberra",
+                         "DTW" = "DTW"),
           selected = 1
-          ),
+        ),
+        bsAlert("alertAnchorClHierNAsPresent"),
         selectInput(
           ns("selectLinkage"),
           label = ("Linkage method"),
@@ -55,8 +84,8 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                       'Plot dendrogram and re-order samples', 
                       TRUE),
         sliderInput(
-          ns('inNclust'),
-          '#dendrogram branches to colour',
+          ns('slPlotHierNclust'),
+          'Number of dendrogram branches to cut',
           min = 1,
           max = 10,
           value = 1,
@@ -64,22 +93,35 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
           ticks = TRUE,
           round = TRUE
         ),
-        checkboxInput(ns('selectKey'), 
-                      'Plot colour key', 
-                      TRUE),
         downloadButton(ns('downCellCl'), 'Download CSV with cluster associations')
       ),
       column(
-        6,
+        3,
         selectInput(
           ns("selectPalette"),
-          label = "Select colour palette:",
+          label = "Heatmap\'s colour palette:",
           choices = l.col.pal,
           selected = 'Spectral'
+        ),
+        selectInput(
+          ns("selectPlotHierPaletteDend"),
+          label = "Dendrogram\'s colour palette",
+          choices = l.col.pal.dend,
+          selected = 'Color Blind'
         ),
         checkboxInput(ns('inRevPalette'), 
                       'Reverse colour palette', 
                       TRUE),
+        checkboxInput(ns('selectKey'), 
+                      'Plot colour key', 
+                      TRUE)
+      ),
+      column(
+        3,
+        checkboxInput(ns('inDispGrid'), 
+                      'Display grid lines', 
+                      TRUE),
+        uiOutput(ns('inGridColorUI')),
         sliderInput(
           ns('inNAcolor'),
           'Shade of grey for NA values',
@@ -88,11 +130,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
           value = 0.8,
           step = .1,
           ticks = TRUE
-        ),
-        checkboxInput(ns('inDispGrid'), 
-                      'Display grid lines', 
-                      TRUE),
-        uiOutput(ns('inGridColorUI'))
+        )
       )
     ),
     
@@ -101,7 +139,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
       column(2,
              numericInput(
                ns('inMarginX'),
-               'Margin below x-axis',
+               'Bottom margin',
                10,
                min = 1,
                width = 100
@@ -110,7 +148,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
       column(2,
              numericInput(
                ns('inMarginY'),
-               'Margin right of y-axis',
+               'Right margin',
                10,
                min = 1,
                width = 100
@@ -127,14 +165,14 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
              )
       ),
       column(2,
-        numericInput(
-          ns('inFontY'),
-          'Font size column labels',
-          1,
-          min = 0,
-          width = 100,
-          step = 0.1
-        )
+             numericInput(
+               ns('inFontY'),
+               'Font size column labels',
+               1,
+               min = 0,
+               width = 100,
+               step = 0.1
+             )
       ),
       column(2,
              numericInput(
@@ -168,18 +206,90 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
 # SERVER
 clustHier <- function(input, output, session, dataMod) {
   
+  ns <- session$ns
+  
+  # Return the number of clusters from the slider 
+  # and delay by a constant in milliseconds defined in auxfunc.R
+  returnNclust = reactive({
+    return(input$slPlotHierNclust)
+  }) %>% debounce(MILLIS)
+  
+  # calculate distance matrix for further clustering
+  # samples arranged in rows with columns corresponding to measurements/features
+  userFitDistHier <- reactive({
+    cat(file = stderr(), 'userFitDistHier \n')
+    
+    loc.dm = dataMod()
+    
+    if (is.null(loc.dm)) {
+      return(NULL)
+    }
+    
+    # Throw some warnings if NAs present in the dataset.
+    # DTW cannot compute distance when NA's are preset.
+    # Other distance measures can be calculated but caution is required with interpretation.
+    # NAs in the wide format can result from explicit NAs in the measurment column or
+    # from missing rows that cause NAs to appear when convertinf from long to wide (dcast)
+    if(sum(is.na(loc.dm)) > 0) {
+      if (input$selectDist == "DTW") {
+        createAlert(session, "alertAnchorClHierNAsPresent", "alertNAsPresentClDTW", title = "Error",
+                    content = helpText.clHier[["alertNAsPresentClDTW"]], 
+                    append = FALSE,
+                    style = "danger")
+        closeAlert(session, 'alertNAsPresentCl')
+        
+        return(NULL)
+        
+      } else {
+        createAlert(session, "alertAnchorClHierNAsPresent", "alertNAsPresentCl", title = "Warning",
+                    content = helpText.clHier[["alertNAsPresentCl"]], 
+                    append = FALSE, 
+                    style = "warning")
+        closeAlert(session, 'alertNAsPresentClDTW')
+      }
+    } else {
+      closeAlert(session, 'alertNAsPresentClDTW')
+      closeAlert(session, 'alertNAsPresentCl')
+    }
+    
+    
+    #pr_DB$set_entry(FUN = fastDTW, names = c("fastDTW"))
+    cl.dist = proxy::dist(loc.dm, method = input$selectDist)
+    
+    return(cl.dist)
+  })
+  
   userFitDendHier <- reactive({
     cat(file = stderr(), 'userFitDendHier \n')
     
-    loc.dm = dataMod()
-    if (is.null(loc.dm))
-      return(NULL)
+    loc.dist = userFitDistHier()
+    print(sum(is.na(loc.dist)))
     
-    loc.cl.dist = dist(loc.dm,  method = input$selectDist)
-    loc.cl.hc = hclust(loc.cl.dist, method = input$selectLinkage)
+    if (is.null(loc.dist)) {
+      return(NULL)
+    } else if (sum(is.na(loc.dist)) > 0) {
+      createAlert(session, "alertAnchorClHierNAsPresent", "alertNAsPresentDist", title = "Error",
+                  content = helpText.clHier[["alertNAsPresentDist"]], 
+                  append = FALSE, 
+                  style = "danger")
+      
+      return(NULL)
+    } else {
+      closeAlert(session, "alertNAsPresentDist")
+    }
+    
+    loc.cl.hc = hclust(loc.dist, method = input$selectLinkage)
+    
+    # number of clusters at which dendrogram is cut
+    loc.k = returnNclust()
+    
+    # make a palette with the amount of colours equal to the number of clusters
+    loc.col = ggthemes::tableau_color_pal(input$selectPlotHierPaletteDend)(n = loc.k)
     
     loc.dend <- as.dendrogram(loc.cl.hc)
-    loc.dend <- color_branches(loc.dend, k = input$inNclust)
+    loc.dend <- color_branches(loc.dend, 
+                               col = loc.col,
+                               k = loc.k)
     
     return(loc.dend)
   })
@@ -196,7 +306,7 @@ clustHier <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      write.csv(x = getDataCl(userFitDendHier(), input$inNclust), file = file, row.names = FALSE)
+      write.csv(x = getDataCl(userFitDendHier(), input$slPlotHierNclust), file = file, row.names = FALSE)
     }
   )
   
@@ -269,7 +379,7 @@ clustHier <- function(input, output, session, dataMod) {
   output$outPlotHier <- renderPlot({
     plotHier()
   })
-
+  
   createFnameHeatMap = reactive({
     
     paste0('clust_hier_',
@@ -330,7 +440,7 @@ clustHier <- function(input, output, session, dataMod) {
       show_grid = TRUE
     )
   })
- 
+  
   output$inGridColorUI <- renderUI({
     ns <- session$ns
     
@@ -345,7 +455,7 @@ clustHier <- function(input, output, session, dataMod) {
         ticks = TRUE)
     }
   })
-   
+  
   # Hierarchical - choose to display regular heatmap.2 or d3heatmap (interactive)
   output$plotInt_ui <- renderUI({
     ns <- session$ns
@@ -355,5 +465,12 @@ clustHier <- function(input, output, session, dataMod) {
       tagList(plotOutput(ns('outPlotHier'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px")))
   })
   
- 
+  # Pop-overs ----
+  addPopover(session, 
+             ns("alLearnMore"),
+             title = "Hierarchical clustering",
+             content = helpText.clHier[["alLearnMore"]],
+             trigger = "click")
+  
+  
 }

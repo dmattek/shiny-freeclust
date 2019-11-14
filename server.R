@@ -1,9 +1,8 @@
-
-
-# This is the server logic for a Shiny web application.
-# You can find out more about building applications with Shiny here:
 #
-# http://shiny.rstudio.com
+# Free-Clust: Shiny app for clustering datas data
+# Author: Maciej Dobrzynski
+#
+# This is the server logic for a Shiny web application.
 #
 
 library(shiny)
@@ -13,6 +12,8 @@ library(shinycssloaders) # for loader animations
 
 # colour of loader spinner (shinycssloaders)
 options(spinner.color="#00A8AA")
+
+# SERVER ----
 
 shinyServer(function(input, output, session) {
   useShinyjs()
@@ -38,7 +39,8 @@ shinyServer(function(input, output, session) {
     return(userDataGen())
   })
   
-  # load main data file
+  # load main data file; 
+  # return a matrix with samples as rows, measurements/features as columns
   dataLoad <- eventReactive(input$butDataLoad, {
     cat("dataLoad\n")
     locFilePath = input$fileDataLoad$datapath
@@ -61,8 +63,9 @@ shinyServer(function(input, output, session) {
       
       row.names(loc.df) = loc.df[, 1]
       loc.df[, 1] = NULL
+      
       # work with data matrix, where:
-      # columns - categories
+      # columns - categories/features
       # rows - samples
       return(as.matrix(t(loc.df)))
     }
@@ -110,7 +113,7 @@ shinyServer(function(input, output, session) {
     return(dm)
   })
   
-  # return dt with an added column with unique track object label
+  # return dt modified according to UI
   dataMod <- reactive({
     cat(file = stderr(), 'dataMod\n')
     loc.dm = dataInBoth()
@@ -118,12 +121,34 @@ shinyServer(function(input, output, session) {
     if (is.null(loc.dm))
       return(NULL)
     
-    if (input$chBdataScale)
-      loc.dm = scale(loc.dm, center = TRUE,  scale = TRUE)
+    # rescale data column-wise (along features)
+    if (input$chBdataScale) {
+      loc.dm = scale(loc.dm, 
+                     center = TRUE,  
+                     scale = TRUE)
+
+      print(loc.dm)      
+    }
     
     # take log10 of data
-    if (input$chBdataLog)
+    if (input$chBdataLog) {
+      if (sum(loc.dm <= 0) > 0) {
+        # Transform data points smaller or equal to zero into NAs
+        loc.dm[loc.dm <= 0] <- NA
+        
+        createAlert(session, "alertAnchorNegPresent", "alertNegPresent", title = "Warning",
+                    content = helpText.server[["alertNegPresent"]], 
+                    append = FALSE,
+                    style = "warning")
+        
+      } else {
+        closeAlert(session, "alertNegPresent")
+      }
+      
       loc.dm = log10(loc.dm)
+    } else {
+      closeAlert(session, "alertNegPresent")
+    }
     
     # winsorize
     if (input$chBdataWinsor2)
@@ -132,7 +157,6 @@ shinyServer(function(input, output, session) {
     # convert missing values in the input data to 0's
     if (input$chBdataNA20)
       loc.dm[is.na(loc.dm)] <- 0
-    
     
     # Data trimming
     # data points below a threshold are set to NA
@@ -270,32 +294,28 @@ shinyServer(function(input, output, session) {
   
   
   
-  #####
-  ## Histogram of dataset
-  output$plotHist <- renderPlot({
-    cat(file = stderr(), 'plotHist \n')
-    
-    loc.dm = dataMod()
-    #cat(loc.dm)
-    
-    if (is.null(loc.dm))
-      return(NULL)
-    
-    plot(
-      hist(loc.dm, breaks = input$slHistBinN, freq = TRUE),
-      main = 'Histogram of data',
-      xlab = 'Values'
-    )
-  })
+  # Tabs ----
+  
+  ##### Histogram of dataset
+  callModule(dataHist, 'TabDataHist', dataMod)
   
   ##### Hierarchical clustering: hclust
   callModule(clustHier, 'TabClustHier', dataMod)
-  
   
   ##### Sparse hierarchical clustering using sparcl
   callModule(clustHierSpar, 'TabClustHierSpar', dataMod)
   
   ##### Bayesian clustering
   callModule(clustBay, 'TabClustBay', dataMod)
+  
+  ##### Hierarchical validation
+  callModule(clustValid, 'TabClValid', dataMod)
+  
+  # Pop-overs ----
+  addPopover(session, 
+             "alDataFormat",
+             title = "Data format",
+             content = helpText.server[["alDataFormat"]],
+             trigger = "click")
   
 })

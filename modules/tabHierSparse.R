@@ -1,13 +1,17 @@
+# Free-Clust: Shiny app for clustering datas data
+# Author: Maciej Dobrzynski
+#
 # RShiny module for performing sparse hierarchical clustering using sparcl
 # Use:
 # in ui.R
 # tabPanel(
-#  'Hierarchical',
-#  clustHierUI('TabClustHier'))
+#  'Sparse Hier.',
+#  clustHierUI('TabClustHierSpar'))
 #
 # in server.R
-# callModule(clustHier, 'TabClustHier', dataMod)
-# where dataMod is the output from a reactive function that returns dataset ready for clustering
+# callModule(clustHierSpar, 'TabClustHierSpar', dataMod)
+# where dataMod is the output from a reactive function 
+# that returns a dataset in wide format ready for clustering
 
 
 require(gplots) # heatmap.2
@@ -20,7 +24,7 @@ require(shinycssloaders) # for loader animations
 
 
 helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated during clustering ",
-                                              "reflect the importance of time points in the clustering. ",
+                                              "reflect the importance of data points in the clustering. ",
                                               "The following labels are used to indicate the importance:",
                                               "<li>Black - time point not taken into account</li>",
                                               "<li><p, style=\"color:DodgerBlue;\">* - low, WF∈(0, 0.1]</p></li>",
@@ -48,10 +52,10 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
     br(),
     fluidRow(
       column(
-        6,
+        3,
         selectInput(
           ns("selectPlotHierSparDist"),
-          label = ("Dissimilarity measure:"),
+          label = ("Dissimilarity measure"),
           choices = list("Euclidean" = "squared.distance",
                          "Manhattan" = "absolute.value"),
           selected = 1
@@ -70,7 +74,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         checkboxInput(ns('selectPlotHierSparDend'), 'Plot dendrogram and re-order samples', TRUE),
         sliderInput(
           ns('inPlotHierSparNclust'),
-          '#dendrogram branches to colour',
+          'Number of dendrogram branches to cut',
           min = 1,
           max = 10,
           value = 1,
@@ -78,58 +82,54 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
           ticks = TRUE,
           round = TRUE
         ),
-        checkboxInput(ns('selectPlotHierSparKey'), 'Plot colour key', TRUE),
         downloadButton(ns('downCellClSpar'), 'Download CSV with cluster associations')
       ),
       
       column(
-        6,
+        3,
         selectInput(
           ns("selectPlotHierSparPalette"),
-          label = "Select colour palette:",
+          label = "Heatmap\'s colour palette:",
           choices = l.col.pal,
           selected = 'Spectral'
         ),
-        checkboxInput(ns('inPlotHierSparRevPalette'), 'Reverse colour palette', TRUE),
-        
-        sliderInput(
-          ns('inPlotHierSparNAcolor'),
-          'Shade of grey for NA values',
-          min = 0,
-          max = 1,
-          value = 0.8,
-          step = .1,
-          ticks = TRUE
+        selectInput(
+          ns("selectPlotHierSparPaletteDend"),
+          label = "Dendrogram\'s colour palette",
+          choices = l.col.pal.dend,
+          selected = 'Color Blind'
         ),
-        
-        checkboxInput(ns('inDispGrid'), 
-                      'Display grid lines', 
-                      TRUE),
-        uiOutput(ns('inGridColorUI'))
+        checkboxInput(ns('inPlotHierSparRevPalette'), 'Reverse colour palette', TRUE),
+        checkboxInput(ns('selectPlotHierSparKey'), 'Plot colour key', TRUE),
+        checkboxInput(ns('inHierSparAdv'),
+                      'Advanced options',
+                      FALSE),
+        uiOutput(ns('uiPlotHierSparNperms')),
+        uiOutput(ns('uiPlotHierSparNiter'))
+      ),
+      column(3,
+             checkboxInput(ns('inDispGrid'), 
+                           'Display grid lines', 
+                           TRUE),
+             uiOutput(ns('inGridColorUI')),
+             sliderInput(
+               ns('inPlotHierSparNAcolor'),
+               'Shade of grey for NA values',
+               min = 0,
+               max = 1,
+               value = 0.8,
+               step = .1,
+               ticks = TRUE
+             )
       )
     ),
-    
-    fluidRow(column(
-      12,
-      checkboxInput(ns('inHierSparAdv'),
-                    'Advanced options',
-                    FALSE),
-      fluidRow(column(6,
-                      uiOutput(
-                        ns('uiPlotHierSparNperms')
-                      )),
-               column(6,
-                      uiOutput(
-                        ns('uiPlotHierSparNiter')
-                      )))
-    )),
-    
+    br(),
     fluidRow(
       column(
         2,
         numericInput(
           ns('inPlotHierSparMarginX'),
-          'Margin below x-axis',
+          'Bottom margin',
           10,
           min = 1,
           width = 100
@@ -139,7 +139,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         2,
         numericInput(
           ns('inPlotHierSparMarginY'),
-          'Margin right of y-axis',
+          'Right margin',
           10,
           min = 1,
           width = 100
@@ -185,7 +185,6 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
       )
     ),
     br(),
-    
     
     downPlotUI(ns('downPlotHierSparPNG'), "Download PNG"),
     
@@ -260,12 +259,21 @@ clustHierSpar <- function(input, output, session, dataMod) {
   userFitDendHierSpar <- reactive({
     cat(file = stderr(), 'userFitDendHierSpar \n')
     
-    sparsehc = userFitHierSpar()
-    if (is.null(sparsehc))
+    loc.hc = userFitHierSpar()
+    if (is.null(loc.hc))
       return(NULL)
     
-    dend <- as.dendrogram(sparsehc$hc)
-    dend <- color_branches(dend, k = input$inPlotHierSparNclust)
+    # number of clusters at which dendrogram is cut
+    loc.k = input$inPlotHierSparNclust
+    
+    # make a palette with the amount of colours equal to the number of clusters
+    loc.col = ggthemes::tableau_color_pal(input$selectPlotHierSparPaletteDend)(n = loc.k)
+    
+    
+    dend <- as.dendrogram(loc.hc$hc)
+    dend <- color_branches(dend, 
+                           col = loc.col,
+                           k = loc.k)
     
     return(dend)
   })
@@ -304,16 +312,14 @@ clustHierSpar <- function(input, output, session, dataMod) {
     cat(file = stderr(), 'plotHierSpar \n')
     
     loc.dm = dataMod()
-    if (is.null(loc.dm))
-      return(NULL)
-    
     loc.sphc <- userFitHierSpar()
-    if (is.null(loc.sphc))
-      return(NULL)
+    loc.dend <- userFitDendHierSpar()
     
-    loc.dend <- as.dendrogram(loc.sphc$hc)
-    loc.dend <-
-      color_branches(loc.dend, k = input$inPlotHierSparNclust)
+    validate(
+      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(loc.sphc), "Did not cluster"),
+      need(!is.null(loc.dend), "Did not create dendrogram")
+    )
     
     if (input$inPlotHierSparRevPalette)
       my_palette <-
