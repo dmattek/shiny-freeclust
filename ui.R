@@ -1,12 +1,10 @@
-
-
-
-
-# This is the user-interface definition of a Shiny web application.
-# You can find out more about building applications with Shiny here:
 #
-# http://shiny.rstudio.com
+# Free-Clust: Shiny app for clustering data
+# Author: Maciej Dobrzynski
 #
+# This is the UI logic for a Shiny web application.
+#
+
 
 library(shiny)
 library(shinyjs) #http://deanattali.com/shinyjs/
@@ -111,11 +109,21 @@ shinyUI(fluidPage(
       tags$hr(),
       
       # trim or clip data
-      checkboxInput('chBdataTrim', 'Trim data?'),
+      checkboxInput('chBdataTrim', 'Trim data'),
+      bsTooltip("chBdataTrim", 
+                "Remove data points outside of the range and set them to NA.",
+                placement = "top",
+                trigger = "hover"),
+      
       uiOutput('resetable_input_trim'),
       uiOutput('uiButTrim'),
       
-      checkboxInput('chBdataClip', 'Clip data?'),
+      checkboxInput('chBdataClip', 'Clip data'),
+      bsTooltip("chBdataClip", 
+                "Remove data points outside of the range and set them to range limits.",
+                placement = "top",
+                trigger = "hover"),
+      
       uiOutput('resetable_input_clip'),
       uiOutput('uiButClip')
     ),
@@ -145,10 +153,14 @@ shinyUI(fluidPage(
         ),
         
         # Bayesian (bclust)
-        tabPanel(
-          'Bayesian',
-          clustBayUI('TabClustBay')
-        ),
+        # The package is not available on CRAN anymore,
+        # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
+        # then uncomment here, in server.R and in global.R
+        #
+        # tabPanel(
+        #   'Bayesian',
+        #   clustBayUI('TabClustBay')
+        # ),
         
         # cluster validation
         tabPanel(

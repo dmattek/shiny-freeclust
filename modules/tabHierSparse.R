@@ -1,4 +1,5 @@
-# Free-Clust: Shiny app for clustering datas data
+#
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # RShiny module for performing sparse hierarchical clustering using sparcl
@@ -189,7 +190,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
     downPlotUI(ns('downPlotHierSparPNG'), "Download PNG"),
     
     br(),
-    checkboxInput(ns('inPlotHierSparInteractive'), 'Interactive Plot?',  value = FALSE),
+    checkboxInput(ns('inPlotHierSparInteractive'), 'Interactive Plot',  value = FALSE),
     uiOutput(ns("plotHierSparInt_ui"))
   )
 }
@@ -232,7 +233,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   
   
   userFitHierSpar <- reactive({
-    cat(file = stderr(), 'userFitHierSpar \n')
+    cat(file = stdout(), 'userFitHierSpar \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))
@@ -257,7 +258,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
 
   
   userFitDendHierSpar <- reactive({
-    cat(file = stderr(), 'userFitDendHierSpar \n')
+    cat(file = stdout(), 'userFitDendHierSpar \n')
     
     loc.hc = userFitHierSpar()
     if (is.null(loc.hc))
@@ -282,7 +283,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   # used when saving cluster associations in sparse hierarchical
   # sparsehc doesn't return original rownames after clustering
   getDataIDs <- reactive({
-    cat(file = stderr(), 'getDataIDs\n')
+    cat(file = stdout(), 'getDataIDs\n')
     loc.m = dataMod()
     
     if (is.null(loc.m))
@@ -309,7 +310,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   # http://stackoverflow.com/questions/26764481/downloading-png-from-shiny-r
   # This function is used to plot and to downoad a pdf
   plotHierSpar <- function() {
-    cat(file = stderr(), 'plotHierSpar \n')
+    cat(file = stdout(), 'plotHierSpar \n')
     
     loc.dm = dataMod()
     loc.sphc <- userFitHierSpar()
@@ -413,7 +414,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
 
   # Sparse Hierarchical clustering (sparcl) interactive version
   output$plotHierSparInt <- renderD3heatmap({
-    cat(file = stderr(), 'plotHierSparInt \n')
+    cat(file = stdout(), 'plotHierSparInt \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))

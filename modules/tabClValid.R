@@ -1,4 +1,5 @@
-# Free-Clust: Shiny app for clustering datas data
+#
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # This module is a tab for cluster valudation using factoextra package
@@ -178,10 +179,10 @@ clustValid <- function(input, output, session, in.dataWide) {
   # calculate distance matrix for further clustering
   # time series arranged in rows with columns corresponding to time points
   calcDist <- reactive({
-    cat(file = stderr(), 'clustValid:calcDist \n')
+    cat(file = stdout(), 'clustValid:calcDist \n')
     
     loc.dm = in.dataWide()
-    print(loc.dm)
+    
     if (is.null(loc.dm)) {
       return(NULL)
     }
@@ -220,7 +221,7 @@ clustValid <- function(input, output, session, in.dataWide) {
   
   # calculate dendrogram for a chosen number of clusters and the linkage method
   calcDendCut = reactive({
-    cat(file = stderr(), 'clustValid:calcDendCut \n')
+    cat(file = stdout(), 'clustValid:calcDendCut \n')
     
     loc.dist = calcDist()
     
@@ -243,7 +244,7 @@ clustValid <- function(input, output, session, in.dataWide) {
   
   # plot average silhouette
   plotSilhAvg <- function() {
-    cat(file = stderr(), 'plotSilhAvg: in\n')
+    cat(file = stdout(), 'plotSilhAvg: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotRel
@@ -276,7 +277,7 @@ clustValid <- function(input, output, session, in.dataWide) {
   
   # plot Ws
   plotWss <- function() {
-    cat(file = stderr(), 'plotWss: in\n')
+    cat(file = stdout(), 'plotWss: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotRel
@@ -310,7 +311,7 @@ clustValid <- function(input, output, session, in.dataWide) {
   
   # PCA visualization of partitioning methods 
   plotClPCA <- function() {
-    cat(file = stderr(), 'plotTree: in\n')
+    cat(file = stdout(), 'plotTree: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
@@ -360,7 +361,7 @@ clustValid <- function(input, output, session, in.dataWide) {
   
   # plot dendrogram tree
   plotTree <- function() {
-    cat(file = stderr(), 'plotTree: in\n')
+    cat(file = stdout(), 'plotTree: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
@@ -402,7 +403,7 @@ clustValid <- function(input, output, session, in.dataWide) {
   
   # plot silhouettes for a particular dendrogram cut
   plotSilhForCut <- function() {
-    cat(file = stderr(), 'plotSilhForCut: in\n')
+    cat(file = stdout(), 'plotSilhForCut: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotInt

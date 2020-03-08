@@ -1,3 +1,7 @@
+#
+# Free-Clust: Shiny app for clustering data
+# Author: Maciej Dobrzynski
+#
 # RShiny module for downloading pdf of the plot
 # Use:
 # in ui.R

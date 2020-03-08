@@ -1,4 +1,5 @@
-# Free-Clust: Shiny app for clustering datas data
+#
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # RShiny module for performing Bayesian clustering using bclust
@@ -158,7 +159,7 @@ clustBay <- function(input, output, session, dataMod) {
   ns = session$ns
   
   userFitBclus <- reactive({
-    cat(file = stderr(), 'userFitBclus \n')
+    cat(file = stdout(), 'userFitBclus \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))
@@ -168,7 +169,7 @@ clustBay <- function(input, output, session, dataMod) {
   })
   
   userDendBclus <- reactive({
-    cat(file = stderr(), 'userDendBclus \n')
+    cat(file = stdout(), 'userDendBclus \n')
     
     d.bclus = userFitBclus()
     if (is.null(d.bclus))
@@ -190,7 +191,7 @@ clustBay <- function(input, output, session, dataMod) {
   })
   
   userVarImpBclus <- reactive({
-    cat(file = stderr(), 'userVarImpBclus \n')
+    cat(file = stdout(), 'userVarImpBclus \n')
     
     d.bclus = userFitBclus()
     if (is.null(d.bclus))
@@ -237,7 +238,7 @@ clustBay <- function(input, output, session, dataMod) {
   callModule(downPlot, "downPlotBayHM", createFnameHeatMap, plotBayHm)
     
   plotBayHm <- function() {
-    cat(file = stderr(), 'plotBayHm \n')
+    cat(file = stdout(), 'plotBayHm \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))
@@ -327,7 +328,7 @@ clustBay <- function(input, output, session, dataMod) {
   
   
   plotBayImp <- function() {
-    cat(file = stderr(), 'plotBayImp \n')
+    cat(file = stdout(), 'plotBayImp \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))
@@ -356,7 +357,7 @@ clustBay <- function(input, output, session, dataMod) {
   })
   
   output$plotBayInt <- renderD3heatmap({
-    cat(file = stderr(), 'plotBayInt \n')
+    cat(file = stdout(), 'plotBayInt \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))

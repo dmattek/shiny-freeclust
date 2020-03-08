@@ -1,5 +1,5 @@
 #
-# Free-Clust: Shiny app for clustering datas data
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # This is the server logic for a Shiny web application.
@@ -9,6 +9,10 @@ library(shiny)
 library(shinyjs) #http://deanattali.com/shinyjs/
 library(shinyBS) # for tooltips
 library(shinycssloaders) # for loader animations
+
+# Global parameters ----
+# change to increase the limit of the upload file size
+options(shiny.maxRequestSize = 100 * 1024 ^ 2)
 
 # colour of loader spinner (shinycssloaders)
 options(spinner.color="#00A8AA")
@@ -115,7 +119,7 @@ shinyServer(function(input, output, session) {
   
   # return dt modified according to UI
   dataMod <- reactive({
-    cat(file = stderr(), 'dataMod\n')
+    cat(file = stdout(), 'dataMod\n')
     loc.dm = dataInBoth()
     
     if (is.null(loc.dm))
@@ -127,7 +131,6 @@ shinyServer(function(input, output, session) {
                      center = TRUE,  
                      scale = TRUE)
 
-      print(loc.dm)      
     }
     
     # take log10 of data
@@ -159,8 +162,8 @@ shinyServer(function(input, output, session) {
       loc.dm[is.na(loc.dm)] <- 0
     
     # Data trimming
-    # data points below a threshold are set to NA
-    # this isn't affected by conversion to 0's above
+    # Data points outside of the range are set to NA.
+    # This isn't affected by conversion to 0's above.
     if (input$chBdataTrim) {
       loc.dm[loc.dm < as.numeric(input$inDataTrimMin) & loc.dm != 0] <- NA
       
@@ -171,6 +174,7 @@ shinyServer(function(input, output, session) {
     
     
     # Data clipping
+    # Data points outside of the range are set to range limits.
     if (input$chBdataClip) {
       loc.dm[loc.dm < as.numeric(input$inDataClipMin) &
                loc.dm != 0] <- input$inDataClipMin
@@ -184,7 +188,7 @@ shinyServer(function(input, output, session) {
   #####
   ## Dynamic UI in the side panel
   output$dataMin <- renderText({
-    cat(file = stderr(), 'dataMin \n')
+    cat(file = stdout(), 'dataMin \n')
     
     loc.dm = dataMod()
     
@@ -205,7 +209,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$dataMax <- renderText({
-    cat(file = stderr(), 'dataMax \n')
+    cat(file = stdout(), 'dataMax \n')
     loc.dm = dataMod()
     
     if (is.null(loc.dm)) {
@@ -226,7 +230,7 @@ shinyServer(function(input, output, session) {
   
   # dynamic UI for trimming data
   output$resetable_input_trim <- renderUI({
-    cat(file = stderr(), 'resetable_input_trim \n')
+    cat(file = stdout(), 'resetable_input_trim \n')
     
     if (input$chBdataTrim) {
       times <- input$butDataTrimReset
@@ -260,7 +264,7 @@ shinyServer(function(input, output, session) {
   })
   
   output$resetable_input_clip <- renderUI({
-    cat(file = stderr(), 'resetable_input_clip \n')
+    cat(file = stdout(), 'resetable_input_clip \n')
     
     if (input$chBdataClip) {
       times <- input$butDataClipReset
@@ -306,7 +310,10 @@ shinyServer(function(input, output, session) {
   callModule(clustHierSpar, 'TabClustHierSpar', dataMod)
   
   ##### Bayesian clustering
-  callModule(clustBay, 'TabClustBay', dataMod)
+  # The package is not available on CRAN anymore,
+  # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
+  # then uncomment here, in ui.R and in global.R
+  #callModule(clustBay, 'TabClustBay', dataMod)
   
   ##### Hierarchical validation
   callModule(clustValid, 'TabClValid', dataMod)

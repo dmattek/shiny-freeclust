@@ -1,5 +1,5 @@
 #
-# Free-Clust: Shiny app for clustering datas data
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # This module is a tab for plotting a historgram
@@ -60,7 +60,7 @@ dataHist <- function(input, output, session, dataMod) {
   }) %>% debounce(millis = MILLIS)
   
   output$plotHist <- renderPlot({
-    cat(file = stderr(), 'plotHist \n')
+    cat(file = stdout(), 'plotHist \n')
     
     loc.dm = dataMod()
     

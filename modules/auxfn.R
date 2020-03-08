@@ -1,4 +1,5 @@
-# Free-Clust: Shiny app for clustering datas data
+# 
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # Auxilary functions & definitions of global constants
@@ -99,7 +100,7 @@ winsor2 <- function (x, multiple=3)
 
 userDataGen <- function() {
   require("MASS")
-  cat(file = stderr(), 'generate data \n')
+  cat(file = stdout(), 'generate data \n')
   # assign result to shared 'dataIn' variable
   loc.x <-
     rbind(mvrnorm(10, c(0, 0), matrix(c(1, 0.9, 0.9, 1), 2, 2)),  mvrnorm(10, c(4, 0), matrix(c(1,-0.9,-0.9, 1), 2, 2)))
@@ -119,7 +120,7 @@ userDataGen <- function() {
 
 getDataCl = function(in.dend, in.k) {
   require(data.table)
-  cat(file = stderr(), 'getDataCl \n')
+  cat(file = stdout(), 'getDataCl \n')
   
   loc.m = dendextend::cutree(in.dend, in.k, order_clusters_as_data = TRUE)
   #print(loc.m)
@@ -146,7 +147,7 @@ getDataCl = function(in.dend, in.k) {
 
 getDataClSpar = function(in.dend, in.k, in.id) {
   require(data.table)
-  cat(file = stderr(), 'getDataClSpar \n')
+  cat(file = stdout(), 'getDataClSpar \n')
   
   loc.m = dendextend::cutree(in.dend, in.k, order_clusters_as_data = TRUE)
   #print(loc.m)

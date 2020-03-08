@@ -24,6 +24,15 @@ After downloading the source code, open `server.R` or `ui.R` and click `Run App`
 - dtw (provides Dynamic Time Warping)
 - factoextra (provides cluster validation)
 
+The package is not available on CRAN anymore. Please install from the [archive](https://cran.r-project.org/src/contrib/Archive/bclust/) using:
+
+```
+packageurl <- "https://cran.r-project.org/src/contrib/Archive/bclust/bclust_1.5.tar.gz"
+install.packages(packageurl, repos=NULL, type="source")
+```
+
+Then uncomment lines of code in in `server.R`, `global.R`, and `ui.R`.
+
 The complete list of dependencies can also be manually installed from the R console by typing:
 ```
 install.packages(c("shiny", "shinyjs", "shinyBS", "shinycssloaders",

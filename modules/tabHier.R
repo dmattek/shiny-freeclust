@@ -1,5 +1,5 @@
 #
-# Free-Clust: Shiny app for clustering datas data
+# Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #
 # This module is a tab for hierarchical clustering (base R hclust + dist)
@@ -199,7 +199,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
     
     br(),
     checkboxInput(ns('plotInt'), 
-                  'Interactive Plot?',
+                  'Interactive Plot',
                   value = FALSE),
     uiOutput(ns("plotInt_ui"))
     
@@ -220,7 +220,7 @@ clustHier <- function(input, output, session, dataMod) {
   # calculate distance matrix for further clustering
   # samples arranged in rows with columns corresponding to measurements/features
   userFitDistHier <- reactive({
-    cat(file = stderr(), 'userFitDistHier \n')
+    cat(file = stdout(), 'userFitDistHier \n')
     
     loc.dm = dataMod()
     
@@ -263,10 +263,9 @@ clustHier <- function(input, output, session, dataMod) {
   })
   
   userFitDendHier <- reactive({
-    cat(file = stderr(), 'userFitDendHier \n')
+    cat(file = stdout(), 'userFitDendHier \n')
     
     loc.dist = userFitDistHier()
-    print(sum(is.na(loc.dist)))
     
     if (is.null(loc.dist)) {
       return(NULL)
@@ -320,7 +319,7 @@ clustHier <- function(input, output, session, dataMod) {
   # This function is used to plot and to downoad a pdf
   
   plotHier <- function() {
-    cat(file = stderr(), 'plotHier \n')
+    cat(file = stdout(), 'plotHier \n')
     
     in.dm = dataMod()
     if (is.null(in.dm))
@@ -397,7 +396,7 @@ clustHier <- function(input, output, session, dataMod) {
   
   # Hierarchical clustering - interactive version
   output$outPlotInt <- renderD3heatmap({
-    cat(file = stderr(), 'Int \n')
+    cat(file = stdout(), 'Int \n')
     
     loc.dm = dataMod()
     if (is.null(loc.dm))
