@@ -1,6 +1,6 @@
 #
 # Free-Clust: Shiny app for clustering data
-# Author: Maciej Dobrzynski
+# Author: Marc-Antoine Jacques & Maciej Dobrzynski
 #
 # This module is a tab for cluster valudation using factoextra package
 
