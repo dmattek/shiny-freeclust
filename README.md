@@ -35,7 +35,7 @@ install.packages(c("shiny", "shinyjs", "shinyBS", "shinycssloaders",
 
 The package `bclust` for Bayesian clustering is not available on CRAN anymore. The `FreeClust` code contains a functional module/tab that uses this clustering approach. If you want to use it:
 
-   * install tge packages from the [archive](https://cran.r-project.org/src/contrib/Archive/bclust/):
+   * install the package from the [archive](https://cran.r-project.org/src/contrib/Archive/bclust/):
 
 ```
 packageurl <- "https://cran.r-project.org/src/contrib/Archive/bclust/bclust_1.5.tar.gz"
@@ -54,6 +54,7 @@ The web-app allows for rudimentary data manipulation. Users have an option to co
 Rescaling is another data manipulation option available to users. When switched on, each row has its mean subtracted and the result is divided by row’s standard deviation; this corresponds to calculating z-scores. Taking log10 of data is another option available.Users can also trim data to omit values below and above a threshold. Such data points are turned into missing values, however these are no longer subject to conversion of missing values in source data described above. Also available is data clipping which assigns threshold values to data exceeding (from below or above) these thresholds. Neither trimming nor clipping affects the zeroes resulting from replacement of missing data.
 
 #### Data format
+
 Users can generate artificial random dataset or can upload a text file in CSV format where rows correspond to different categories, and columns correspond to samples. The first column should include labels of categories, while the first row should contain sample names. An example file is in example-data folder.
 
 Depending on regional settings (i.e. locale), Excel might save the CSV file differently from the default setting where columns are separated by a comma and dot is used as a decimal separator. For example, a German locale would result in a CSV file with columns separated by a semicolon and decimal point signified by a comma. The app can account for such variations of the input format as well as the convention used to represent missing values, e.g. whether it is a character string “NA”, a dash “-“, or an empty space.
