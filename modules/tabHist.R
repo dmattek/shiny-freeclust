@@ -30,7 +30,7 @@ dataHistUI <- function(id, label = "Histogram") {
   
   tagList(
     h4('Data histogram'),
-    p("Overview of your data. ",
+    p("Data overview. ",
       actionLink(ns("alLearnMore"), "Learn more")
     ),
     

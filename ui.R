@@ -53,7 +53,7 @@ shinyUI(fluidPage(
       
       actionButton("butDataGen1", 'Synthetic data'),
       bsTooltip("butDataGen1", 
-                "Generates random dataset for testing",
+                "Use classic iris dataset for testing.",
                 placement = "top",
                 trigger = "hover"),
       
@@ -64,38 +64,47 @@ shinyUI(fluidPage(
       
       # Data modification
       checkboxInput('chBdataNA20',
-                    'Convert missing values to 0\'s',
+                    'Missing values to 0\'s',
                     FALSE),
       bsTooltip("chBdataNA20", 
-                "Conversion affects clustering but is necessary for some algorithms, e.g. Bayesian.",
+                "Convert missing values to 0. Conversion is necessary for some algorithms, e.g. Bayesian.",
                 placement = "top",
                 trigger = "hover"),
       
       
       checkboxInput('chBdataScale',
-                    'Rescale data',
+                    'z-score',
                     FALSE),
       bsTooltip("chBdataScale", 
-                "For every measurement (not sample!) subtract the mean, divide by SD. This is equivalent to calculating a z-score.",
+                "Rescale data with z-score. For every measurement (not sample!) subtract the mean and divide by SD.",
                 placement = "top",
                 trigger = "hover"),
       
       
       checkboxInput('chBdataLog',
-                    'Take log10 of data',
+                    'Log10(x)',
                     FALSE),
       bsTooltip("chBdataLog", 
-                "Transform data with log10. Negative values and zeroes are changed to missing data points.",
+                "Transform data with log10(x). Negative values and zeroes are changed to missing data points.",
                 placement = "top",
                 trigger = "hover"),
+
+      checkboxInput('chBdataLog1',
+                    'Log10(x+1)',
+                    FALSE),
+      bsTooltip("chBdataLog1", 
+                "Transform data with log10(x+1). Good for x >= 0. Negative values and zeroes are changed to missing data points.",
+                placement = "top",
+                trigger = "hover"),
+
       bsAlert("alertAnchorNegPresent"),
       
       
       checkboxInput('chBdataWinsor2',
-                    'Winsorise data',
+                    'Winsorise',
                     FALSE),
       bsTooltip("chBdataWinsor2", 
-                "Pull-in data points that are farther than 3x robust SD (MAD). The procedure is similar to trimming.",
+                "Pull-in data points that are farther than 3x robust SD (MAD). The procedure is similar to clipping.",
                 placement = "top",
                 trigger = "hover"),
       

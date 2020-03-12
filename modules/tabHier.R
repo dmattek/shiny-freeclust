@@ -28,7 +28,7 @@ helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the da
                                          "A <b>dissimilarity matrix</b> between sample pairs ",
                                          "is calculated with one of the metrics, such as ",
                                          "Euclidean (<a href=\"https://en.wikipedia.org/wiki/Euclidean_distance\" target=\"_blank\" title=\"External link\">L2 norm</a>), ",
-                                         "Manhattan (<a href=\"https://en.wikipedia.org/wiki/Taxicab_geometry\" target=\"_blank\" title=\"External link\">L1 norm</a>), or",
+                                         "Manhattan (<a href=\"https://en.wikipedia.org/wiki/Taxicab_geometry\" target=\"_blank\" title=\"External link\">L1 norm</a>), or ",
                                          "<a href=\"https://en.wikipedia.org/wiki/Dynamic_time_warping\" target=\"_blank\" title=\"External link\">Dynamic Time Warping</a> (DTW). ",
                                          "Instead of comparing features one by one, DTW tries to align and match their shapes. ",
                                          "This makes DTW a good quantification of similarity when the order of features matters, as is the case in time series.</p>",
@@ -123,7 +123,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
         3,
         checkboxInput(ns('inDispGrid'), 
                       'Display grid lines', 
-                      TRUE),
+                      FALSE),
         uiOutput(ns('inGridColorUI')),
         sliderInput(
           ns('inNAcolor'),

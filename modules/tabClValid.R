@@ -102,8 +102,10 @@ clustValidUI <- function(id, label = "Validation") {
     tabsetPanel(
       tabPanel("Relative",
                br(),
-               p("Determine and visualise the optimal number of clusters. ",
-                 actionLink(ns("alLearnMoreRel"), "Learn more")),
+               actionLink(ns("alLearnMoreRel"), "More about optimal cluster number."),
+               br(),
+               br(),
+               
                fluidRow(
                  column(2, 
                         actionButton(ns('butPlotRel'), 'Validate!')
@@ -129,8 +131,10 @@ clustValidUI <- function(id, label = "Validation") {
       ),
       tabPanel("Internal",
                br(),
-               p("Validate a given data partitioning. ",
-                 actionLink(ns("alLearnMoreInt"), "Learn more")),
+               actionLink(ns("alLearnMoreInt"), "More about cluster validation."),
+               br(),
+               br(),
+               
                fluidRow(
                  column(2,
                         actionButton(ns('butPlotInt'), 'Validate!')

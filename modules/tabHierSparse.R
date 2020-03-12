@@ -28,9 +28,9 @@ helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated
                                               "reflect the importance of data points in the clustering. ",
                                               "The following labels are used to indicate the importance:",
                                               "<li>Black - time point not taken into account</li>",
-                                              "<li><p, style=\"color:DodgerBlue;\">* - low, WF∈(0, 0.1]</p></li>",
-                                              "<li><p, style=\"color:MediumSeaGreen;\">** - medium, WF∈(0.1, 0.5]</p></li>",
-                                              "<li><p, style=\"color:Tomato;\">*** - high, WF∈(0.5, 1.0]</p></li>",
+                                              "<li><p>* - low, WF∈(0, 0.1]</p></li>",
+                                              "<li><p>** - medium, WF∈(0.1, 0.5]</p></li>",
+                                              "<li><p>*** - high, WF∈(0.5, 1.0]</p></li>",
                                               "</p><p>Witten and Tibshirani (2010): ",
                                               "<i>A framework for feature selection in clustering</i>; ",
                                               "Journal of the American Statistical Association 105(490): 713-726.</p>"))
@@ -111,7 +111,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
       column(3,
              checkboxInput(ns('inDispGrid'), 
                            'Display grid lines', 
-                           TRUE),
+                           FALSE),
              uiOutput(ns('inGridColorUI')),
              sliderInput(
                ns('inPlotHierSparNAcolor'),
@@ -493,14 +493,18 @@ clustHierSpar <- function(input, output, session, dataMod) {
     }
   })
   
-  # Sparse Hierarchical - choose to display regulat heatmap.2 or d3heatmap (interactive)
+  # Sparse Hierarchical - choose to display a regular heatmap.2 or d3heatmap (interactive)
   output$plotHierSparInt_ui <- renderUI({
     ns <- session$ns
     
     if (input$inPlotHierSparInteractive)
-      d3heatmapOutput(ns("plotHierSparInt"), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
+      d3heatmapOutput(ns("plotHierSparInt"), 
+                      height = paste0(input$inPlotHeight, "px"), 
+                      width = paste0(input$inPlotWidth, "px"))
     else
-      plotOutput(ns('outPlotHierSpar'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px"))
+      plotOutput(ns('outPlotHierSpar'), 
+                 height = paste0(input$inPlotHeight, "px"), 
+                 width = paste0(input$inPlotWidth, "px"))
   })
   
   

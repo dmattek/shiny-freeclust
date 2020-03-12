@@ -40,7 +40,7 @@ shinyServer(function(input, output, session) {
   dataGen1 <- eventReactive(input$butDataGen1, {
     cat("dataGen1\n")
     
-    return(userDataGen())
+    return(userDataGenIris())
   })
   
   # load main data file; 
@@ -102,7 +102,7 @@ shinyServer(function(input, output, session) {
     # as we set the values in this same reactive
     if (locInGen1 != isolate(counter$dataGen1)) {
       cat("dataInBoth: inDataGen1\n")
-      dm = userDataGen()
+      dm = userDataGenIris()
       # no need to isolate updating the counter reactive values!
       counter$dataGen1 <- locInGen1
     } else if (locInDataLoad != isolate(counter$dataLoad)) {
@@ -152,6 +152,27 @@ shinyServer(function(input, output, session) {
     } else {
       closeAlert(session, "alertNegPresent")
     }
+    
+    # take log10(1+x) of data
+    if (input$chBdataLog1) {
+      if (sum(loc.dm <= -1) > 0) {
+        # Transform data points smaller or equal to -1 into NAs
+        loc.dm[loc.dm <= -1] <- NA
+        
+        createAlert(session, "alertAnchorNegPresent", "alertNegPresent1", title = "Warning",
+                    content = helpText.server[["alertNegPresent1"]], 
+                    append = FALSE,
+                    style = "warning")
+        
+      } else {
+        closeAlert(session, "alertNegPresent1")
+      }
+      
+      loc.dm = log10(loc.dm + 1)
+    } else {
+      closeAlert(session, "alertNegPresent1")
+    }
+    
     
     # winsorize
     if (input$chBdataWinsor2)

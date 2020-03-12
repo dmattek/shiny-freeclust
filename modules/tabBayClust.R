@@ -76,7 +76,7 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
       column(3,
              checkboxInput(ns('inDispGrid'), 
                            'Display grid lines', 
-                           TRUE),
+                           FALSE),
              uiOutput(ns('inGridColorUI'))
       )
     ),

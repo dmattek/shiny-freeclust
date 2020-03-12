@@ -6,6 +6,7 @@ A web-app for easy interactive clustering. Choose your clustering algortihms, pl
 This is source code of an interactive clustering web-app written in R/Shiny. A running instance can be accessed at [shinyapps.io](https://macdobry.shinyapps.io/free-clust/).
 
 #### Running locally from RStudio
+
 After downloading the source code, open `server.R` or `ui.R` and click `Run App` button in the upper right corner of the window with the code. The following packages need to be installed before running this code:
 
 - magrittr (provides %>% operator)
@@ -30,6 +31,22 @@ install.packages(c("shiny", "shinyjs", "shinyBS", "shinycssloaders",
 					"dendextend", "RColorBrewer", "ggthemes",
 					"data.table", "sparcl", "dtw", "factoextra")) 
 ```
+
+#### Running from command-line
+
+In the command-line of your operating system, e.g. Terminal.app on macOS, go to the folder with your app and type:
+
+```
+R -e "shiny::runApp('.', port = 3833)"
+```
+
+You should see the message:
+
+```
+Listening on http://127.0.0.1:3833
+```
+
+One you point your web browser to that address, you should see the app running. The port option should be a number above 1000. Choose something that does not overlap with your existing services.
 
 #### A note on Bayesian clustering
 
