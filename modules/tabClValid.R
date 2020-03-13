@@ -164,7 +164,7 @@ clustValidUI <- function(id, label = "Validation") {
 }
 
 # SERVER ----
-clustValid <- function(input, output, session, in.dataWide) {
+clustValid <- function(input, output, session, inDataWide) {
   
   ns = session$ns
   
@@ -185,9 +185,9 @@ clustValid <- function(input, output, session, in.dataWide) {
   calcDist <- reactive({
     cat(file = stdout(), 'clustValid:calcDist \n')
     
-    loc.dm = in.dataWide()
+    locDM = inDataWide()
     
-    if (is.null(loc.dm)) {
+    if (is.null(locDM)) {
       return(NULL)
     }
     
@@ -196,7 +196,7 @@ clustValid <- function(input, output, session, in.dataWide) {
     # Other distance measures can be calculated but caution is required with interpretation.
     # NAs in the wide format can result from explicit NAs in the measurment column or
     # from missing rows that cause NAs to appear when convertinf from long to wide (dcast)
-    if(sum(is.na(loc.dm)) > 0) {
+    if(sum(is.na(locDM)) > 0) {
       if (input$selectDiss == "DTW") {
         createAlert(session, "alertAnchorClValidNAsPresent", "alertClValidNAsPresentDTW", title = "Error",
                     content = helpText.clValid[["alertClValidNAsPresentDTW"]], 
@@ -220,20 +220,20 @@ clustValid <- function(input, output, session, in.dataWide) {
     
     
     # calculate distance matrix
-    return(proxy::dist(loc.dm, method = input$selectDiss))
+    return(proxy::dist(locDM, method = input$selectDiss))
   })
   
   # calculate dendrogram for a chosen number of clusters and the linkage method
   calcDendCut = reactive({
     cat(file = stdout(), 'clustValid:calcDendCut \n')
     
-    loc.dist = calcDist()
+    locDist = calcDist()
     
-    if (is.null(loc.dist)) {
+    if (is.null(locDist)) {
       return(NULL)
     }
     
-    return(LOChcut(x = loc.dist,
+    return(myHcut(x = locDist,
                    k = returnNclust(),
                    hc_func = "hclust",
                    hc_method = input$selectLinkage,
@@ -256,14 +256,14 @@ clustValid <- function(input, output, session, in.dataWide) {
     # Check if required data exists
     # Thanks to isolate all mods in the left panel are delayed 
     # until clicking the Plot button
-    loc.dist = isolate(calcDist())
+    locDist = isolate(calcDist())
     
     validate(
-      need(!is.null(loc.dist), "Nothing to plot. Load data first!"),
-      need(returnMaxNclust() <  nrow(loc.dist), "Maximum number of clusters to conisder should be smaller than the number of samples.")
+      need(!is.null(locDist), "Nothing to plot. Load data first!"),
+      need(returnMaxNclust() <  nrow(locDist), "Maximum number of clusters to conisder should be smaller than the number of samples.")
     )    
     
-    loc.p = LOCnbclust(loc.dist,
+    locP = myNbclust(locDist,
                        method = "silhouette",
                        k.max = returnMaxNclust(),
                        hc_metric = input$selectDiss,
@@ -271,12 +271,12 @@ clustValid <- function(input, output, session, in.dataWide) {
       xlab("Number of clusters") +
       ylab("Average silhouette width") +
       ggtitle("Average silhouette width for different cluster numbers") +
-      LOCggplotTheme(in.font.base = PLOTFONTBASE, 
+      myGgplotTheme(in.font.base = PLOTFONTBASE, 
                      in.font.axis.text = PLOTFONTAXISTEXT, 
                      in.font.axis.title = PLOTFONTAXISTITLE, 
                      in.font.strip = PLOTFONTFACETSTRIP, 
                      in.font.legend = PLOTFONTLEGEND)
-    return(loc.p)
+    return(locP)
   }
   
   # plot Ws
@@ -289,14 +289,14 @@ clustValid <- function(input, output, session, in.dataWide) {
     # Check if required data exists
     # Thanks to isolate all mods in the left panel are delayed 
     # until clicking the Plot button
-    loc.dist = isolate(calcDist())
+    locDist = isolate(calcDist())
     
     validate(
-      need(!is.null(loc.dist), "Nothing to plot. Load data first!"),
-      need(returnMaxNclust() <  nrow(loc.dist), "Maximum number of clusters to conisder should be smaller than the number of samples.")
+      need(!is.null(locDist), "Nothing to plot. Load data first!"),
+      need(returnMaxNclust() <  nrow(locDist), "Maximum number of clusters to conisder should be smaller than the number of samples.")
     )    
     
-    loc.p = LOCnbclust(loc.dist,
+    locP = myNbclust(locDist,
                        method = "wss",
                        k.max = returnMaxNclust(),
                        hc_metric = input$selectDiss,
@@ -304,13 +304,13 @@ clustValid <- function(input, output, session, in.dataWide) {
       xlab("Number of clusters") +
       ylab("Total within cluster sum of squares") +
       ggtitle("Within cluster sum of squares for different cluster numbers") +
-      LOCggplotTheme(in.font.base = PLOTFONTBASE, 
+      myGgplotTheme(in.font.base = PLOTFONTBASE, 
                      in.font.axis.text = PLOTFONTAXISTEXT, 
                      in.font.axis.title = PLOTFONTAXISTITLE, 
                      in.font.strip = PLOTFONTFACETSTRIP, 
                      in.font.legend = PLOTFONTLEGEND)
     
-    return(loc.p)
+    return(locP)
   }
   
   # PCA visualization of partitioning methods 
@@ -321,45 +321,45 @@ clustValid <- function(input, output, session, in.dataWide) {
     locBut = input$butPlotInt
     
     # until clicking the Plot button
-    loc.part = calcDendCut()
-    loc.dm = in.dataWide()
+    locPart = calcDendCut()
+    locDM = inDataWide()
     
     validate(
-      need(!is.null(loc.part), "Nothing to plot. Load data first!"),
-      need(!is.null(loc.dm),   "Nothing to plot. Load data first!"),
-      need(sum(is.na(loc.dm)), "Cannot calculate PCA in the presence of missing data and/or NAs.")
+      need(!is.null(locPart), "Nothing to plot. Load data first!"),
+      need(!is.null(locDM),   "Nothing to plot. Load data first!"),
+      need(sum(is.na(locDM)), "Cannot calculate PCA in the presence of missing data and/or NAs.")
     )    
     
-    if (sum(is.na(loc.dm)) > 0)
+    if (sum(is.na(locDM)) > 0)
       return(NULL)
     
     # Tha tableau "Color Blind" palette has only 10 colours; 
     # change to "Tableau 20" if more clusters requested
-    loc.pal = ifelse(returnNclust() <= 10, "Color Blind", "Tableau 20")
-    loc.col = ggthemes::tableau_color_pal(loc.pal)(n = returnNclust())
+    locPal = ifelse(returnNclust() <= 10, "Color Blind", "Tableau 20")
+    locCol = ggthemes::tableau_color_pal(locPal)(n = returnNclust())
     
-    loc.p = factoextra::fviz_cluster(loc.part, 
-                                     data = loc.dm,
+    locP = factoextra::fviz_cluster(locPart, 
+                                     data = locDM,
                                      geom = "point",
                                      elipse.type = "convex", 
                                      main = "Principal components"
     )+
-      LOCggplotTheme(in.font.base = PLOTFONTBASE, 
+      myGgplotTheme(in.font.base = PLOTFONTBASE, 
                      in.font.axis.text = PLOTFONTAXISTEXT, 
                      in.font.axis.title = PLOTFONTAXISTITLE, 
                      in.font.strip = PLOTFONTFACETSTRIP, 
                      in.font.legend = PLOTFONTLEGEND) +
-      scale_fill_manual(values = loc.col) +
-      scale_colour_manual(values = loc.col)
+      scale_fill_manual(values = locCol) +
+      scale_colour_manual(values = locCol)
     
     
     # Retrieve association of cluster and colours and use it for dendrogram for color matching between dend, silhouette and PCA plot
-    temp = ggplot_build(loc.p)
+    temp = ggplot_build(locP)
     map_individual = as.data.table(temp$data[[1]][, c("colour", "shape")])
     map_cluster = map_individual[, .SD[1], by = shape]
     map_cluster[, cluster := 1:nrow(map_cluster)]
     
-    return(list(plot = loc.p, mapping_individual = map_individual, mapping_cluster = map_cluster))
+    return(list(plot = locP, mapping_individual = map_individual, mapping_cluster = map_cluster))
   }
   
   
@@ -371,13 +371,13 @@ clustValid <- function(input, output, session, in.dataWide) {
     locBut = input$butPlotInt
     
     # Check if required data exists
-    loc.part = calcDendCut()
+    locPart = calcDendCut()
     
     # Rerun the PCA plot to obtain clour mapping of clusters in PCA and silhouette plot and match it with dendrogram colors.
     loc.map = plotClPCA()
     
     validate(
-      need(!is.null(loc.part), "Nothing to plot. Load data first!"),
+      need(!is.null(locPart), "Nothing to plot. Load data first!"),
       need(!is.null(loc.map),  "Cannot assign colours to clusters. Possible NAs in the dataset!")
     )    
     
@@ -385,23 +385,23 @@ clustValid <- function(input, output, session, in.dataWide) {
     # This is necessary because fviz_dend colors clusters from left to right,
     # whereas fviz_silhouette and fviz_cluster use the order of cluster first occurence in the list of individuals.
     loc.mapClus = loc.map$mapping_cluster
-    ord.clusDend = unique(loc.part$cluster[loc.part$order])
+    ord.clusDend = unique(locPart$cluster[locPart$order])
     col.clusDend = loc.mapClus[, colour][ord.clusDend]
     
-    loc.p = factoextra::fviz_dend(loc.part,
+    locP = factoextra::fviz_dend(locPart,
                                   k = returnNclust(),
                                   k_colors = col.clusDend,
                                   show_labels = F,
                                   rect = T,
                                   xlab = "Samples",
                                   main = "Dendrogram") +
-      LOCggplotTheme(in.font.base = PLOTFONTBASE,
+      myGgplotTheme(in.font.base = PLOTFONTBASE,
                      in.font.axis.text = PLOTFONTAXISTEXT,
                      in.font.axis.title = PLOTFONTAXISTITLE,
                      in.font.strip = PLOTFONTFACETSTRIP,
                      in.font.legend = PLOTFONTLEGEND)
     
-    return(loc.p)
+    return(locP)
   }
   
   
@@ -413,48 +413,48 @@ clustValid <- function(input, output, session, in.dataWide) {
     locBut = input$butPlotInt
     
     # until clicking the Plot button
-    loc.part = calcDendCut()
+    locPart = calcDendCut()
     validate(
-      need(!is.null(loc.part), "Nothing to plot. Load data first!")
+      need(!is.null(locPart), "Nothing to plot. Load data first!")
     )    
     
-    loc.pal = ifelse(returnNclust() <= 10, "Color Blind", "Tableau 20")
-    loc.col = ggthemes::tableau_color_pal(loc.pal)(n = returnNclust())
+    locPal = ifelse(returnNclust() <= 10, "Color Blind", "Tableau 20")
+    locCol = ggthemes::tableau_color_pal(locPal)(n = returnNclust())
     
-    loc.p = factoextra::fviz_silhouette(loc.part, 
+    locP = factoextra::fviz_silhouette(locPart, 
                                         print.summary = FALSE, 
                                         main = "Silhouette") +
       xlab("Samples") +
-      LOCggplotTheme(in.font.base = PLOTFONTBASE, 
+      myGgplotTheme(in.font.base = PLOTFONTBASE, 
                      in.font.axis.text = PLOTFONTAXISTEXT, 
                      in.font.axis.title = PLOTFONTAXISTITLE, 
                      in.font.strip = PLOTFONTFACETSTRIP, 
                      in.font.legend = PLOTFONTLEGEND) +
       theme(axis.text.x = element_blank()) +
-      scale_fill_manual(values = loc.col) +
-      scale_colour_manual(values = loc.col)
+      scale_fill_manual(values = locCol) +
+      scale_colour_manual(values = locCol)
     
-    return(loc.p)
+    return(locP)
   }
   
   # Plot rendering ----
   # Display silhouette
   output$outPlotSilhAvg <- renderPlot({
-    loc.p = plotSilhAvg()
-    if(is.null(loc.p))
+    locP = plotSilhAvg()
+    if(is.null(locP))
       return(NULL)
     
-    return(loc.p)
+    return(locP)
   })
   
   
   # Display wss
   output$outPlotWss <- renderPlot({
-    loc.p = plotWss()
-    if(is.null(loc.p))
+    locP = plotWss()
+    if(is.null(locP))
       return(NULL)
     
-    return(loc.p)
+    return(locP)
   })
   
   # Display PCA of clustering
@@ -467,12 +467,12 @@ clustValid <- function(input, output, session, in.dataWide) {
     #   dev.off()
     # pdf(NULL)
     
-    loc.p = plotClPCA()
-    loc.p = loc.p$plot
-    if(is.null(loc.p))
+    locP = plotClPCA()
+    locP = locP$plot
+    if(is.null(locP))
       return(NULL)
     
-    return(loc.p)
+    return(locP)
   })
   
   # Display tree
@@ -485,11 +485,11 @@ clustValid <- function(input, output, session, in.dataWide) {
     #   dev.off()
     # pdf(NULL)
     
-    loc.p = plotTree()
-    if(is.null(loc.p))
+    locP = plotTree()
+    if(is.null(locP))
       return(NULL)
     
-    return(loc.p)
+    return(locP)
   })
   
   # Display silhouette for a dendrogram cut
@@ -502,11 +502,11 @@ clustValid <- function(input, output, session, in.dataWide) {
     #   dev.off()
     # pdf(NULL)
     
-    loc.p = plotSilhForCut()
-    if(is.null(loc.p))
+    locP = plotSilhForCut()
+    if(is.null(locP))
       return(NULL)
     
-    return(loc.p)
+    return(locP)
   })
   
   # Pop-overs ----

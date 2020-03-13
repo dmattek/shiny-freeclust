@@ -76,7 +76,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         ),
         checkboxInput(ns('selectPlotHierSparDend'), 'Plot dendrogram and re-order samples', TRUE),
         sliderInput(
-          ns('inPlotHierSparNclust'),
+          ns('slNclust'),
           'Number of dendrogram branches to cut',
           min = 1,
           max = 10,
@@ -151,7 +151,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
 
     br(),
     checkboxInput(ns('chBplotStyle'),
-                  'Adjust plot',
+                  'Adjust plot appearance',
                   FALSE),
     conditionalPanel(
       condition = "input.chBplotStyle",
@@ -259,15 +259,22 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
 clustHierSpar <- function(input, output, session, dataMod) {
   ns = session$ns
   
-  userFitHierSpar <- reactive({
-    cat(file = stdout(), 'userFitHierSpar \n')
+  
+  # Return the number of clusters from the slider 
+  # and delay by a constant in milliseconds defined in auxfunc.R
+  returnNclust = reactive({
+    return(input$slNclust)
+  }) %>% debounce(MILLIS)
+  
+  calcHierSpar <- reactive({
+    cat(file = stdout(), 'calcHierSpar \n')
     
-    loc.dm = dataMod()
-    if (is.null(loc.dm))
+    locDM = dataMod()
+    if (is.null(locDM))
       return(NULL)
     
     perm.out <- HierarchicalSparseCluster.permute(
-      loc.dm,
+      locDM,
       wbounds = NULL,
       nperms = input$inPlotHierSparNperms,
       dissimilarity = input$selectPlotHierSparDist
@@ -284,15 +291,15 @@ clustHierSpar <- function(input, output, session, dataMod) {
   })
 
   
-  userFitDendHierSpar <- reactive({
-    cat(file = stdout(), 'userFitDendHierSpar \n')
+  calcDend <- reactive({
+    cat(file = stdout(), 'calcDend \n')
     
-    loc.hc = userFitHierSpar()
+    loc.hc = calcHierSpar()
     if (is.null(loc.hc))
       return(NULL)
     
     # number of clusters at which dendrogram is cut
-    loc.k = input$inPlotHierSparNclust
+    loc.k = returnNclust()
     
     # make a palette with the amount of colours equal to the number of clusters
     loc.col = ggthemes::tableau_color_pal(input$selectPlotHierSparPaletteDend)(n = loc.k)
@@ -322,15 +329,15 @@ clustHierSpar <- function(input, output, session, dataMod) {
   # download a list of IDs with cluster assignments
   output$downClAssSpar <- downloadHandler(
     filename = function() {
-      paste0('clust_hierchSpar_data_',
+      paste0('clust_hierSpar_data_',
              input$selectPlotHierSparDist,
              '_',
              input$selectPlotHierSparLinkage, '.csv')
     },
     
     content = function(file) {
-      fwrite(x = getDataClSpar(userFitDendHierSpar(), 
-                               input$inPlotHierSparNclust, 
+      fwrite(x = myGetDataClSpar(calcDend(), 
+                               input$slNclust, 
                                getDataIDs()), 
              file = file, 
              row.names = FALSE)
@@ -347,7 +354,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      saveRDS(object = userFitDendHierSpar(), file = file)
+      saveRDS(object = calcDend(), file = file)
     }
   )
   
@@ -358,12 +365,12 @@ clustHierSpar <- function(input, output, session, dataMod) {
   plotHierSpar <- function() {
     cat(file = stdout(), 'plotHierSpar \n')
     
-    loc.dm = dataMod()
-    loc.sphc <- userFitHierSpar()
-    loc.dend <- userFitDendHierSpar()
+    locDM = dataMod()
+    loc.sphc <- calcHierSpar()
+    loc.dend <- calcDend()
     
     validate(
-      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(locDM), "Nothing to plot. Load data first!"),
       need(!is.null(loc.sphc), "Did not cluster"),
       need(!is.null(loc.dend), "Did not create dendrogram")
     )
@@ -392,7 +399,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
                                    loc.sphc$ws <= 0.1,
                                    "* ",
                                    ifelse(loc.sphc$ws <= 0.5, "** ", "*** ")
-                                 )), colnames(loc.dm))
+                                 )), colnames(locDM))
     
     loc.colcol   = ifelse(loc.sphc$ws == 0,
                           "black",
@@ -404,7 +411,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
     
     
     loc.p = heatmap.2(
-      loc.dm,
+      locDM,
       Colv = "NA",
       Rowv = var.tmp.1,
       srtCol = 90,
@@ -424,8 +431,8 @@ clustHierSpar <- function(input, output, session, dataMod) {
       colCol = loc.colcol,
       labCol = loc.colnames,
       sepcolor = if (input$inDispGrid) grey(input$inPlotHierSparGridColor) else NULL,
-      colsep = if (input$inDispGrid) 1:ncol(loc.dm) else NULL,
-      rowsep = if (input$inDispGrid) 1:nrow(loc.dm) else NULL,
+      colsep = if (input$inDispGrid) 1:ncol(locDM) else NULL,
+      rowsep = if (input$inDispGrid) 1:nrow(locDM) else NULL,
       cexRow = input$inPlotHierSparFontX,
       cexCol = input$inPlotHierSparFontY,
       main = paste(
@@ -446,7 +453,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   
   createFnameHeatMap = reactive({
     
-    paste0('clust_hierSparse_',  
+    paste0('clust_hierSpar_',  
            input$selectPlotHierSparDist,
            "_",
            input$selectPlotHierSparLinkage, 
@@ -462,12 +469,12 @@ clustHierSpar <- function(input, output, session, dataMod) {
   output$plotHierSparInt <- renderD3heatmap({
     cat(file = stdout(), 'plotHierSparInt \n')
     
-    loc.dm = dataMod()
-    loc.sphc <- userFitHierSpar()
-    loc.dend <- userFitDendHierSpar()
+    locDM = dataMod()
+    loc.sphc <- calcHierSpar()
+    loc.dend <- calcDend()
     
     validate(
-      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(locDM), "Nothing to plot. Load data first!"),
       need(!is.null(loc.sphc), "Did not cluster"),
       need(!is.null(loc.dend), "Did not create dendrogram")
     )
@@ -491,7 +498,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
       var.tmp.2 = "none"
     }
     
-    loc.colnames = paste0(colnames(loc.dm), ifelse(loc.sphc$ws == 0, "",
+    loc.colnames = paste0(colnames(locDM), ifelse(loc.sphc$ws == 0, "",
                                                    ifelse(
                                                      loc.sphc$ws <= 0.1,
                                                      " *",
@@ -499,7 +506,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
                                                    )))
     
     d3heatmap(
-      loc.dm,
+      locDM,
       Rowv = var.tmp.1,
       dendrogram = var.tmp.2,
       trace = "none",
@@ -542,13 +549,13 @@ clustHierSpar <- function(input, output, session, dataMod) {
     ns <- session$ns
     
     if (input$inPlotHierSparInteractive)
-      d3heatmapOutput(ns("plotHierSparInt"), 
-                      height = paste0(input$inPlotHeight, "px"), 
-                      width = paste0(input$inPlotWidth, "px"))
+      withSpinner(d3heatmapOutput(ns("plotHierSparInt"), 
+                                  height = paste0(input$inPlotHeight, "px"), 
+                                  width = paste0(input$inPlotWidth, "px")))
     else
-      plotOutput(ns('outPlotHierSpar'), 
-                 height = paste0(input$inPlotHeight, "px"), 
-                 width = paste0(input$inPlotWidth, "px"))
+      withSpinner(plotOutput(ns('outPlotHierSpar'), 
+                             height = paste0(input$inPlotHeight, "px"), 
+                             width = paste0(input$inPlotWidth, "px")))
   })
   
   

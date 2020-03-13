@@ -14,6 +14,9 @@ MILLIS = 1000
 # Number of significant digits to display in table stats
 SIGNIFDIGITSINTAB = 3
 
+# Number of significant digits used to truncate min/max
+SIGNIFDIGITSROUND = 4
+
 # if true, additional output printed to R console
 DEB = T
 
@@ -34,6 +37,7 @@ PLOTWIDTH = 85 # in percent
 
 # default number of facets in plots
 PLOTNFACETDEFAULT = 3
+
 
 
 helpText.server = c(
@@ -71,8 +75,23 @@ l.col.pal.dend = list(
 
 ## Data processing ----
 
+# Calculate minimum of x and floor the result to sig significant digits
+myMin = function(x, sig = 4, na.rm = T) {
+  locX = min(x, na.rm = na.rm)
+  
+  return(floor(locX * 10^sig) / (10^sig))
+}
+
+# Calculate maximum of x and ceil the result to sig significant digits
+myMax = function(x, sig = 4, na.rm = T) {
+  locX = max(x, na.rm = na.rm)
+  
+  return(ceiling(locX * 10^sig) / (10^sig))
+}
+
+
 # From: https://www.r-bloggers.com/winsorization/
-winsor1 <- 
+myWinsor1 <- 
 function (x, fraction=.05)
 {
   if(length(fraction) != 1 || fraction < 0 ||
@@ -86,7 +105,7 @@ function (x, fraction=.05)
 }
 
 
-winsor2 <- function (x, multiple=3)
+myWinsor2 <- function (x, multiple=3)
 {
   if(length(multiple) != 1 || multiple <= 0) {
     stop("bad value for 'multiple'")
@@ -104,7 +123,7 @@ winsor2 <- function (x, multiple=3)
 # Only first measurement, A, differs.
 # Should generate two clusters.
 
-userDataGen <- function() {
+myUserDataGen <- function() {
   require("MASS")
   cat(file = stdout(), 'generate data \n')
   # assign result to shared 'dataIn' variable
@@ -119,13 +138,16 @@ userDataGen <- function() {
 }
 
 # Generate iris dataset for testing
-userDataGenIris = function() {
+myUserDataGenIris = function() {
   locX = as.matrix(iris[,1:4])
   locRowNames = sprintf("%s_%03d", as.vector(iris[,5]), 1:nrow(iris))
   rownames(locX) = locRowNames
   
   return(locX)
 }
+
+
+## Clustering ----
 
 # Return a dt with cell IDs and corresponding cluster assignments depending on dendrogram cut (in.k)
 # This one works wth dist & hclust pair
@@ -134,7 +156,7 @@ userDataGenIris = function() {
 # in.dend  - dendrogram; usually output from as.dendrogram(hclust(distance_matrix))
 # in.k - level at which dendrogram should be cut
 
-getDataCl = function(in.dend, in.k) {
+myGetDataCl = function(in.dend, in.k) {
   require(data.table)
   cat(file = stdout(), 'getDataCl \n')
   
@@ -160,8 +182,6 @@ getDataCl = function(in.dend, in.k) {
 }
 
 
-## Clustering ----
-
 # Return a dt with cell IDs and corresponding cluster assignments depending on dendrogram cut (in.k)
 # This one works with sparse hierarchical clustering!
 # Arguments:
@@ -169,7 +189,7 @@ getDataCl = function(in.dend, in.k) {
 # in.k - level at which dendrogram should be cut
 # in.id - vector of cell id's
 
-getDataClSpar = function(in.dend, in.k, in.id) {
+myGetDataClSpar = function(in.dend, in.k, in.id) {
   require(data.table)
   cat(file = stdout(), 'getDataClSpar \n')
   
@@ -203,7 +223,7 @@ getDataClSpar = function(in.dend, in.k, in.id) {
 #Customize factoextra functions to accept dissimilarity matrix from start. Otherwise can't use distance functions that are not in base R, like DTW.
 # Inherit and adapt hcut function to take input from UI, used for fviz_clust
 
-LOChcut <-
+myHcut <-
   function(x,
            k = 2,
            isdiss = inherits(x, "dist"),
@@ -229,9 +249,9 @@ LOChcut <-
 # Modified from factoextra::fviz_nbclust
 # Allow (actually enforce) x to be a distance matrix; no GAP statistics for compatibility
 
-LOCnbclust <-
+myNbclust <-
   function (x,
-            FUNcluster = LOChcut,
+            FUNcluster = myHcut,
             method = c("silhouette", "wss"),
             k.max = 10,
             verbose = FALSE,
@@ -315,7 +335,7 @@ LOCnbclust <-
 #'
 #' @examples
 #'
-LOCggplotTheme = function(in.font.base = 12,
+myGgplotTheme = function(in.font.base = 12,
                           in.font.axis.text = 12,
                           in.font.axis.title = 12,
                           in.font.strip = 14,

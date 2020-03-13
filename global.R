@@ -36,5 +36,5 @@ source('modules/tabHierSparse.R')
 # The package is not available on CRAN anymore,
 # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
 # then uncomment here, in ui.R and in server.R
-#source('modules/tabBayClust.R')
+source('modules/tabBayClust.R')
 source('modules/tabClValid.R')

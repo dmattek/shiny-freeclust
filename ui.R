@@ -68,93 +68,15 @@ shinyUI(fluidPage(
       actionButton("butDataLoad",  'Load Data'),
       
       actionButton("butDataGen1", 'Synthetic data'),
+      
+      actionButton("butReset", "Reset file input"),
       bsTooltip("butDataGen1", 
                 "Use classic iris dataset for testing.",
                 placement = "top",
-                trigger = "hover"),
+                trigger = "hover")
       
-      actionButton("butReset", "Reset file input"),
-      # End of data load
-      
-      tags$hr(),
-      
-      # Data modification
-      checkboxInput('chBdataNA20',
-                    'Missing values to 0\'s',
-                    FALSE),
-      bsTooltip("chBdataNA20", 
-                "Convert missing values to 0. Conversion is necessary for some algorithms, e.g. Bayesian.",
-                placement = "top",
-                trigger = "hover"),
-      
-      
-      checkboxInput('chBdataScale',
-                    'z-score',
-                    FALSE),
-      bsTooltip("chBdataScale", 
-                "Rescale data with z-score. For every measurement (not sample!) subtract the mean and divide by SD.",
-                placement = "top",
-                trigger = "hover"),
-      
-      
-      checkboxInput('chBdataLog',
-                    'Log10(x)',
-                    FALSE),
-      bsTooltip("chBdataLog", 
-                "Transform data with log10(x). Negative values and zeroes are changed to missing data points.",
-                placement = "top",
-                trigger = "hover"),
 
-      checkboxInput('chBdataLog1',
-                    'Log10(x+1)',
-                    FALSE),
-      bsTooltip("chBdataLog1", 
-                "Transform data with log10(x+1). Good for x >= 0. Negative values and zeroes are changed to missing data points.",
-                placement = "top",
-                trigger = "hover"),
-
-      bsAlert("alertAnchorNegPresent"),
-      
-      
-      checkboxInput('chBdataWinsor2',
-                    'Winsorise',
-                    FALSE),
-      bsTooltip("chBdataWinsor2", 
-                "Pull-in data points that are farther than 3x robust SD (MAD). The procedure is similar to clipping.",
-                placement = "top",
-                trigger = "hover"),
-      
-      
-      tags$hr(),
-      
-      # Show data min/max
-      textOutput('dataMin'),
-      textOutput('dataMax'),
-      
-      tags$hr(),
-      
-      # trim or clip data
-      checkboxInput('chBdataTrim', 'Trim data'),
-      bsTooltip("chBdataTrim", 
-                "Remove data points outside of the range and set them to NA.",
-                placement = "top",
-                trigger = "hover"),
-      
-      uiOutput('resetable_input_trim'),
-      uiOutput('uiButTrim'),
-      
-      checkboxInput('chBdataClip', 'Clip data'),
-      bsTooltip("chBdataClip", 
-                "Remove data points outside of the range and set them to range limits.",
-                placement = "top",
-                trigger = "hover"),
-      
-      uiOutput('resetable_input_clip'),
-      uiOutput('uiButClip')
     ),
-    # End of data modification
-    
-    
     
     mainPanel(
       tabsetPanel(
@@ -182,10 +104,10 @@ shinyUI(fluidPage(
         # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
         # then uncomment here, in server.R and in global.R
         #
-        # tabPanel(
-        #   'Bayesian',
-        #   clustBayUI('TabClustBay')
-        # ),
+        tabPanel(
+          'Bayesian',
+          clustBayUI('TabClustBay')
+        ),
         
         # cluster validation
         tabPanel(

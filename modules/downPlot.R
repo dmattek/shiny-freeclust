@@ -34,43 +34,35 @@ downPlotUI <- function(id, label = "Download Plot") {
       
       column(2,
              uiOutput(ns('uiDownButton'))
-    ),
-    
-    
-    column(
-      2,
-      tags$div(id = "inline", 
-               numericInput(
-                 ns('inPlotWidth'),
-                 "Width [in]",
-                 8.5,
-                 min = 1,
-                 width = 100
-               )
       ),
       
-    ),
-    column(
-      2,
-      tags$div(id = "inline", 
-               numericInput(
-                 ns('inPlotHeight'),
-                 "Height [in]",
-                 11,
-                 min = 1,
-                 width = 100
-               )
+      
+      column(
+        2,
+        tags$div(id = "inline", 
+                 numericInput(
+                   ns('inPlotWidth'),
+                   "Width [in]",
+                   8.5,
+                   min = 1,
+                   width = 100
+                 )
+        ),
+        
+      ),
+      column(
+        2,
+        tags$div(id = "inline", 
+                 numericInput(
+                   ns('inPlotHeight'),
+                   "Height [in]",
+                   11,
+                   min = 1,
+                   width = 100
+                 )
+        )
       )
-    ),
-    
-    column(2,
-           downloadButton(ns('downRDS'), label = "RDS"),
-           bsTooltip(ns("downRDS"),
-                     helpText.downPlot[["downRDS"]],
-                     placement = "top",
-                     trigger = "hover",
-                     options = NULL))
-  )
+    )
   )
 }
 
@@ -119,21 +111,5 @@ downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
       }
     }
   )
-  
-  # download object used for plotting
-  output$downRDS <- downloadHandler(
-    filename = function() {
-      cat(in.fname(), "\n")
-      gsub("pdf|png", "rds", in.fname())
-    },
-    
-    content = function(file) {
-      saveRDS(
-        in.plot(),
-        file = file,
-      )
-    }
-  )
-  
   
 }

@@ -19,6 +19,8 @@ require(gplots) # heatmap.2
 require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(d3heatmap) # interactive heatmap
+require(shinyBS) # for tooltips
+require(shinycssloaders) # for loader animations
 
 helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the dataset. DTW cannot calculate the distance. "),
                     alertNAsPresentCl = paste0("NAs (still) present in the dataset, caution recommended."),
@@ -37,7 +39,7 @@ helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the da
                     downClAss = "Download a CSV with cluster assignments to time series ID",
                     downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.")
 
-# UI
+# UI ----
 clustHierUI <- function(id, label = "Hierarchical CLustering") {
   ns <- NS(id)
   
@@ -89,7 +91,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                       'Plot dendrogram and re-order samples', 
                       TRUE),
         sliderInput(
-          ns('slPlotHierNclust'),
+          ns('slNclust'),
           'Number of dendrogram branches to cut',
           min = 1,
           max = 10,
@@ -142,7 +144,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
     
     br(),
     checkboxInput(ns('chBplotStyle'),
-                  'Adjust plot',
+                  'Adjust plot appearance',
                   FALSE),
     conditionalPanel(
       condition = "input.chBplotStyle",
@@ -242,7 +244,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
   )
 }
 
-# SERVER
+# SERVER ----
 clustHier <- function(input, output, session, dataMod) {
   
   ns <- session$ns
@@ -250,17 +252,17 @@ clustHier <- function(input, output, session, dataMod) {
   # Return the number of clusters from the slider 
   # and delay by a constant in milliseconds defined in auxfunc.R
   returnNclust = reactive({
-    return(input$slPlotHierNclust)
+    return(input$slNclust)
   }) %>% debounce(MILLIS)
   
   # calculate distance matrix for further clustering
   # samples arranged in rows with columns corresponding to measurements/features
-  userFitDistHier <- reactive({
-    cat(file = stdout(), 'userFitDistHier \n')
+  calcDist <- reactive({
+    cat(file = stdout(), 'calcDist \n')
     
-    loc.dm = dataMod()
+    locDM = dataMod()
     
-    if (is.null(loc.dm)) {
+    if (is.null(locDM)) {
       return(NULL)
     }
     
@@ -269,7 +271,7 @@ clustHier <- function(input, output, session, dataMod) {
     # Other distance measures can be calculated but caution is required with interpretation.
     # NAs in the wide format can result from explicit NAs in the measurment column or
     # from missing rows that cause NAs to appear when convertinf from long to wide (dcast)
-    if(sum(is.na(loc.dm)) > 0) {
+    if(sum(is.na(locDM)) > 0) {
       if (input$selectDist == "DTW") {
         createAlert(session, "alertAnchorClHierNAsPresent", "alertNAsPresentClDTW", title = "Error",
                     content = helpText.clHier[["alertNAsPresentClDTW"]], 
@@ -293,16 +295,16 @@ clustHier <- function(input, output, session, dataMod) {
     
     
     #pr_DB$set_entry(FUN = fastDTW, names = c("fastDTW"))
-    cl.dist = proxy::dist(loc.dm, 
+    cl.dist = proxy::dist(locDM, 
                           method = input$selectDist)
     
     return(cl.dist)
   })
   
-  userFitDendHier <- reactive({
-    cat(file = stdout(), 'userFitDendHier \n')
+  calcDend <- reactive({
+    cat(file = stdout(), 'calcDend \n')
     
-    loc.dist = userFitDistHier()
+    loc.dist = calcDist()
     
     if (is.null(loc.dist)) {
       return(NULL)
@@ -337,7 +339,7 @@ clustHier <- function(input, output, session, dataMod) {
   # download a list of IDs with cluster assignments
   output$downClAss <- downloadHandler(
     filename = function() {
-      paste0('clust_hierch_data_',
+      paste0('clust_hier_data_',
              input$selectDist,
              '_',
              input$selectLinkage, 
@@ -345,8 +347,8 @@ clustHier <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      fwrite(x = getDataCl(userFitDendHier(), 
-                           input$slPlotHierNclust), 
+      fwrite(x = myGetDataCl(calcDend(), 
+                           input$slNclust), 
              file = file, 
              row.names = FALSE)
     }
@@ -362,7 +364,7 @@ clustHier <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      saveRDS(object = userFitDendHier(), file = file)
+      saveRDS(object = calcDend(), file = file)
     }
   )
   
@@ -375,11 +377,11 @@ clustHier <- function(input, output, session, dataMod) {
   plotHier <- function() {
     cat(file = stdout(), 'plotHier \n')
     
-    loc.dm = dataMod()
-    loc.dend <- userFitDendHier()
+    locDM = dataMod()
+    loc.dend <- calcDend()
     
     validate(
-      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(locDM), "Nothing to plot. Load data first!"),
       need(!is.null(loc.dend), "Did not create dendrogram")
     )
     
@@ -403,7 +405,7 @@ clustHier <- function(input, output, session, dataMod) {
     }
     
     heatmap.2(
-      loc.dm,
+      locDM,
       Colv = "NA",
       Rowv = var.tmp.1,
       srtCol = 90,
@@ -418,8 +420,8 @@ clustHier <- function(input, output, session, dataMod) {
       RowSideColors = col_labels,
       colRow = col_labels,
       sepcolor = if (input$inDispGrid) grey(input$inGridColor) else NULL,
-      colsep = if (input$inDispGrid) 1:ncol(loc.dm) else NULL,
-      rowsep = if (input$inDispGrid) 1:nrow(loc.dm) else NULL,
+      colsep = if (input$inDispGrid) 1:ncol(locDM) else NULL,
+      rowsep = if (input$inDispGrid) 1:nrow(locDM) else NULL,
       cexRow = input$inFontX,
       cexCol = input$inFontY,
       main = paste(
@@ -452,11 +454,11 @@ clustHier <- function(input, output, session, dataMod) {
   output$outPlotInt <- renderD3heatmap({
     cat(file = stdout(), 'Int \n')
     
-    loc.dm = dataMod()
-    loc.dend <- userFitDendHier()
+    locDM = dataMod()
+    loc.dend <- calcDend()
     
     validate(
-      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(locDM), "Nothing to plot. Load data first!"),
       need(!is.null(loc.dend), "Did not create dendrogram")
     )
     
@@ -480,7 +482,7 @@ clustHier <- function(input, output, session, dataMod) {
     }
     
     d3heatmap(
-      loc.dm,
+      locDM,
       Rowv = var.tmp.1,
       dendrogram = var.tmp.2,
       trace = "none",
@@ -516,9 +518,13 @@ clustHier <- function(input, output, session, dataMod) {
   output$plotUI <- renderUI({
     ns <- session$ns
     if (input$plotInt)
-      tagList(d3heatmapOutput(ns("outPlotInt"), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px")))
+        withSpinner(d3heatmapOutput(ns("outPlotInt"), 
+                              height = paste0(input$inPlotHeight, "px"), 
+                              width = paste0(input$inPlotWidth, "px")))
     else
-      tagList(plotOutput(ns('outPlotHier'), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px")))
+        withSpinner(plotOutput(ns('outPlotHier'), 
+                               height = paste0(input$inPlotHeight, "px"), 
+                               width = paste0(input$inPlotWidth, "px")))
   })
   
   # Pop-overs ----

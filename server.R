@@ -10,14 +10,14 @@ library(shinyjs) #http://deanattali.com/shinyjs/
 library(shinyBS) # for tooltips
 library(shinycssloaders) # for loader animations
 
-# Global parameters ----
+## Global parameters ----
 # change to increase the limit of the upload file size
 options(shiny.maxRequestSize = 100 * 1024 ^ 2)
 
 # colour of loader spinner (shinycssloaders)
 options(spinner.color="#00A8AA")
 
-# SERVER ----
+## SERVER ----
 
 shinyServer(function(input, output, session) {
   useShinyjs()
@@ -40,9 +40,10 @@ shinyServer(function(input, output, session) {
   dataGen1 <- eventReactive(input$butDataGen1, {
     cat("dataGen1\n")
     
-    return(userDataGenIris())
+    return(myUerDataGenIris())
   })
   
+  ## Load data ----
   # load main data file; 
   # return a matrix with samples as rows, measurements/features as columns
   dataLoad <- eventReactive(input$butDataLoad, {
@@ -77,6 +78,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  ## Prepare data ----
   dataInBoth <- reactive({
     # Without direct references to inDataGen1,2 and inFileLoad, inDataGen2
     #    does not trigger running this reactive once inDataGen1 is used.
@@ -104,7 +106,7 @@ shinyServer(function(input, output, session) {
     # as we set the values in this same reactive
     if (locInGen1 != isolate(counter$dataGen1)) {
       cat("dataInBoth: inDataGen1\n")
-      dm = userDataGenIris()
+      dm = myUserDataGenIris()
       # no need to isolate updating the counter reactive values!
       counter$dataGen1 <- locInGen1
     } else if (locInDataLoad != isolate(counter$dataLoad)) {
@@ -127,228 +129,36 @@ shinyServer(function(input, output, session) {
     if (is.null(loc.dm))
       return(NULL)
     
-    if(input$rBflipRowCol == "row") {
+    if(input$rBflipRowCol == "col") {
       # work with data matrix, where:
-      # columns - categories/features
-      # rows - samples
+      # row - categories/features
+      # columns - samples
       
       loc.dm = t(loc.dm)
-    }
-    
-    
-    # rescale data column-wise (along features)
-    if (input$chBdataScale) {
-      loc.dm = scale(loc.dm, 
-                     center = TRUE,  
-                     scale = TRUE)
-
-    }
-    
-    # take log10 of data
-    if (input$chBdataLog) {
-      if (sum(loc.dm <= 0) > 0) {
-        # Transform data points smaller or equal to zero into NAs
-        loc.dm[loc.dm <= 0] <- NA
-        
-        createAlert(session, "alertAnchorNegPresent", "alertNegPresent", title = "Warning",
-                    content = helpText.server[["alertNegPresent"]], 
-                    append = FALSE,
-                    style = "warning")
-        
-      } else {
-        closeAlert(session, "alertNegPresent")
-      }
-      
-      loc.dm = log10(loc.dm)
-    } else {
-      closeAlert(session, "alertNegPresent")
-    }
-    
-    # take log10(1+x) of data
-    if (input$chBdataLog1) {
-      if (sum(loc.dm <= -1) > 0) {
-        # Transform data points smaller or equal to -1 into NAs
-        loc.dm[loc.dm <= -1] <- NA
-        
-        createAlert(session, "alertAnchorNegPresent", "alertNegPresent1", title = "Warning",
-                    content = helpText.server[["alertNegPresent1"]], 
-                    append = FALSE,
-                    style = "warning")
-        
-      } else {
-        closeAlert(session, "alertNegPresent1")
-      }
-      
-      loc.dm = log10(loc.dm + 1)
-    } else {
-      closeAlert(session, "alertNegPresent1")
-    }
-    
-    
-    # winsorize
-    if (input$chBdataWinsor2)
-      loc.dm = winsor2(loc.dm)
-    
-    # convert missing values in the input data to 0's
-    if (input$chBdataNA20)
-      loc.dm[is.na(loc.dm)] <- 0
-    
-    # Data trimming
-    # Data points outside of the range are set to NA.
-    # This isn't affected by conversion to 0's above.
-    if (input$chBdataTrim) {
-      loc.dm[loc.dm < as.numeric(input$inDataTrimMin) & loc.dm != 0] <- NA
-      
-      # data points above a threshold are set to NA
-      # this isn't affected by conversion to 0's above
-      loc.dm[loc.dm > as.numeric(input$inDataTrimMax)] <- NA
-    }
-    
-    
-    # Data clipping
-    # Data points outside of the range are set to range limits.
-    if (input$chBdataClip) {
-      loc.dm[loc.dm < as.numeric(input$inDataClipMin) &
-               loc.dm != 0] <- input$inDataClipMin
-      loc.dm[loc.dm > as.numeric(input$inDataClipMax)] <-
-        input$inDataClipMax
     }
     
     return(loc.dm)
   })
   
-  #####
-  ## Dynamic UI in the side panel
-  output$dataMin <- renderText({
-    cat(file = stdout(), 'dataMin \n')
-    
-    loc.dm = dataMod()
-    
-    if (is.null(loc.dm)) {
-      paste('Min/max unavailable - data not loaded')
-    }
-    else {
-      loc.extr = min(loc.dm, na.rm = TRUE)
-      paste('Min = ',
-            formatC(
-              loc.extr,
-              format = "g",
-              big.mark = '\'',
-              decimal.mark = '.'
-            ),
-            sep = '')
-    }
-  })
-  
-  output$dataMax <- renderText({
-    cat(file = stdout(), 'dataMax \n')
-    loc.dm = dataMod()
-    
-    if (is.null(loc.dm)) {
-      return(NULL)
-    }
-    else {
-      loc.extr = max(loc.dm, na.rm = TRUE)
-      paste('Max = ',
-            formatC(
-              loc.extr,
-              format = "g",
-              big.mark = '\'',
-              decimal.mark = '.'
-            ),
-            sep = '')
-    }
-  })
-  
-  # dynamic UI for trimming data
-  output$resetable_input_trim <- renderUI({
-    cat(file = stdout(), 'resetable_input_trim \n')
-    
-    if (input$chBdataTrim) {
-      times <- input$butDataTrimReset
-      
-      div(
-        id = letters[(times %% length(letters)) + 1],
-        numericInput(
-          'inDataTrimMin',
-          'Discard data below:',
-          value = 0,
-          width = 200,
-          step = 100
-        ),
-        numericInput(
-          'inDataTrimMax',
-          'Discard data above:',
-          value = 1e6,
-          width = 200,
-          step = 100
-        )
-      )
-    } else
-      return(NULL)
-  })
-  
-  output$uiButTrim <- renderUI({
-    if (input$chBdataTrim) {
-      actionButton('butDataTrimReset', 'Reset data trimming')
-    } else
-      return(NULL)
-  })
-  
-  output$resetable_input_clip <- renderUI({
-    cat(file = stdout(), 'resetable_input_clip \n')
-    
-    if (input$chBdataClip) {
-      times <- input$butDataClipReset
-      div(
-        id = letters[(times %% length(letters)) + 1],
-        numericInput(
-          'inDataClipMin',
-          'Clip data below threshold:',
-          value = 0,
-          width = 200,
-          step = 100
-        ),
-        numericInput(
-          'inDataClipMax',
-          'Clip data above threshold:',
-          value = 1e6,
-          width = 200,
-          step = 100
-        )
-      )
-    } else
-      return(NULL)
-  })
-  
-  output$uiButClip <- renderUI({
-    if (input$chBdataClip) {
-      actionButton('butDataClipReset', 'Reset data clipping')
-    } else
-      return(NULL)
-  })
-  
-  
-  
-  # Tabs ----
+  ## Modules ----
   
   ##### Histogram of dataset
-  callModule(dataHist, 'TabDataHist', dataMod)
+  dataModProc = callModule(dataHist, 'TabDataHist', dataMod)
   
   ##### Hierarchical clustering: hclust
-  callModule(clustHier, 'TabClustHier', dataMod)
+  callModule(clustHier, 'TabClustHier', dataModProc)
   
   ##### Sparse hierarchical clustering using sparcl
-  callModule(clustHierSpar, 'TabClustHierSpar', dataMod)
+  callModule(clustHierSpar, 'TabClustHierSpar', dataModProc)
   
   ##### Bayesian clustering
   # The package is not available on CRAN anymore,
   # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
   # then uncomment here, in ui.R and in global.R
-  #callModule(clustBay, 'TabClustBay', dataMod)
+  callModule(clustBay, 'TabClustBay', dataModProc)
   
   ##### Hierarchical validation
-  callModule(clustValid, 'TabClValid', dataMod)
+  callModule(clustValid, 'TabClValid', dataModProc)
   
   # Pop-overs ----
   addPopover(session, 
