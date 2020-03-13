@@ -10,6 +10,12 @@
 # in server.R
 # callModule(downPlot, "uniqueID", 'fname.pdf', input_plot_to_save)
 
+helpText.downPlot = c(
+  downPlot = "Download a rendered plot in PDF (or PNG in case of a heatmap) formats.",
+  downRDS = "Download R object used for plotting. Can be loaded with readRDS function for further adjustments.",
+  inPlotWidth = "Adjust width of the saved plot.",
+  inPlotHeight = "Adjust height of the saved plot.")
+
 
 downPlotUI <- function(id, label = "Download Plot") {
   ns <- NS(id)
@@ -26,33 +32,45 @@ downPlotUI <- function(id, label = "Download Plot") {
                    "#inline label{ display: table-cell; text-align: center; vertical-align: middle; } #inline .form-group { display: table-row;}")
       ),
       
-      column(
-        2,
-        tags$div(id = "inline", 
-                 numericInput(
-                   ns('inPlotWidth'),
-                   "Width [in]",
-                   8.5,
-                   min = 1,
-                   width = 100
-                 )
-        )
-      ),
-      column(
-        2,
-        tags$div(id = "inline", 
-                 numericInput(
-                   ns('inPlotHeight'),
-                   "Height [in]",
-                   11,
-                   min = 1,
-                   width = 100
-                 )
-        )
-      ),
       column(2,
-             uiOutput(ns('uiDownButton')))
-    )
+             uiOutput(ns('uiDownButton'))
+    ),
+    
+    
+    column(
+      2,
+      tags$div(id = "inline", 
+               numericInput(
+                 ns('inPlotWidth'),
+                 "Width [in]",
+                 8.5,
+                 min = 1,
+                 width = 100
+               )
+      ),
+      
+    ),
+    column(
+      2,
+      tags$div(id = "inline", 
+               numericInput(
+                 ns('inPlotHeight'),
+                 "Height [in]",
+                 11,
+                 min = 1,
+                 width = 100
+               )
+      )
+    ),
+    
+    column(2,
+           downloadButton(ns('downRDS'), label = "RDS"),
+           bsTooltip(ns("downRDS"),
+                     helpText.downPlot[["downRDS"]],
+                     placement = "top",
+                     trigger = "hover",
+                     options = NULL))
+  )
   )
 }
 
@@ -92,7 +110,7 @@ downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
         } else {
           png(file,
               width  = input$inPlotWidth,
-              height = input$inPlotHeight, units = 'in', res = 300)
+              height = input$inPlotHeight, units = 'in', res = 1200)
         }
         
         
@@ -101,5 +119,21 @@ downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
       }
     }
   )
+  
+  # download object used for plotting
+  output$downRDS <- downloadHandler(
+    filename = function() {
+      cat(in.fname(), "\n")
+      gsub("pdf|png", "rds", in.fname())
+    },
+    
+    content = function(file) {
+      saveRDS(
+        in.plot(),
+        file = file,
+      )
+    }
+  )
+  
   
 }

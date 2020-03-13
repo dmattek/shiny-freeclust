@@ -58,20 +58,22 @@ shinyServer(function(input, output, session) {
     else {
       cat("dataLoad: read\n")
       
-      loc.df = read.csv(
+      locDT = fread(
         locFilePath,
         na.strings = input$rButDataNA,
         sep = input$rButDataSep,
         dec = input$rButDataDec
       )
       
-      row.names(loc.df) = loc.df[, 1]
-      loc.df[, 1] = NULL
+      loc1stCol = locDT[, 1]
+      loc1stColName = colnames(loc1stCol)
+      loc1stColVal  = loc1stCol[[loc1stColName]]
+      locDT[, (loc1stColName) := NULL]
+
+      locDM = as.matrix(locDT)
+      rownames(locDM) = loc1stColVal
       
-      # work with data matrix, where:
-      # columns - categories/features
-      # rows - samples
-      return(as.matrix(t(loc.df)))
+      return(locDM)      
     }
   })
   
@@ -124,6 +126,15 @@ shinyServer(function(input, output, session) {
     
     if (is.null(loc.dm))
       return(NULL)
+    
+    if(input$rBflipRowCol == "row") {
+      # work with data matrix, where:
+      # columns - categories/features
+      # rows - samples
+      
+      loc.dm = t(loc.dm)
+    }
+    
     
     # rescale data column-wise (along features)
     if (input$chBdataScale) {

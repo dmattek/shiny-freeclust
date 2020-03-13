@@ -33,7 +33,9 @@ helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated
                                               "<li><p>*** - high, WF∈(0.5, 1.0]</p></li>",
                                               "</p><p>Witten and Tibshirani (2010): ",
                                               "<i>A framework for feature selection in clustering</i>; ",
-                                              "Journal of the American Statistical Association 105(490): 713-726.</p>"))
+                                              "Journal of the American Statistical Association 105(490): 713-726.</p>"),
+                        downClAss = "Download a CSV with cluster assignments to time series ID",
+                        downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.")
 
 
 # UI ----
@@ -82,8 +84,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
           step = 1,
           ticks = TRUE,
           round = TRUE
-        ),
-        downloadButton(ns('downCellClSpar'), 'Download CSV with cluster associations')
+        )
       ),
       
       column(
@@ -105,8 +106,31 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         checkboxInput(ns('inHierSparAdv'),
                       'Advanced options',
                       FALSE),
-        uiOutput(ns('uiPlotHierSparNperms')),
-        uiOutput(ns('uiPlotHierSparNiter'))
+        
+        # Only show this panel if inHierSparAdv == TRUE
+        conditionalPanel(
+          condition = "input.inHierSparAdv == 1",
+          ns = ns, 
+          sliderInput(
+            ns('inPlotHierSparNperms'),
+            'Number of permutations',
+            min = 1,
+            max = 20,
+            value = 10,
+            step = 1,
+            ticks = TRUE
+          ),
+          sliderInput(
+            ns('inPlotHierSparNiter'),
+            'Number of iterations',
+            min = 1,
+            max = 50,
+            value = 15,
+            step = 1,
+            ticks = TRUE
+          )
+        ),
+        
       ),
       column(3,
              checkboxInput(ns('inDispGrid'), 
@@ -124,113 +148,116 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
              )
       )
     ),
+
     br(),
-    fluidRow(
-      column(
-        2,
-        numericInput(
-          ns('inPlotHierSparMarginX'),
-          'Bottom margin',
-          10,
-          min = 1,
-          width = 100
+    checkboxInput(ns('chBplotStyle'),
+                  'Adjust plot',
+                  FALSE),
+    conditionalPanel(
+      condition = "input.chBplotStyle",
+      ns = ns,
+      fluidRow(
+        column(
+          2,
+          numericInput(
+            ns('inPlotHierSparMarginX'),
+            'Bottom margin',
+            10,
+            min = 1,
+            width = 100
+          )
+        ),
+        column(
+          2,
+          numericInput(
+            ns('inPlotHierSparMarginY'),
+            'Right margin',
+            10,
+            min = 1,
+            width = 100
+          )
+        ),
+        column(
+          2,
+          numericInput(
+            ns('inPlotHierSparFontX'),
+            'Font size row labels',
+            1,
+            min = 0,
+            width = 100,
+            step = 0.1
+          )
+        ),
+        column(
+          2,
+          numericInput(
+            ns('inPlotHierSparFontY'),
+            'Font size column labels',
+            1,
+            min = 0,
+            width = 100,
+            step = 0.1
+          )
+        ),
+        column(2,
+               numericInput(
+                 ns('inPlotHeight'),
+                 'Display plot height',
+                 value = 1000,
+                 min = 100,
+                 step = 100
+               ),
+               numericInput(
+                 ns('inPlotWidth'),
+                 'Display plot width',
+                 value = 800,
+                 min = 100,
+                 step = 100
+               )
         )
-      ),
-      column(
-        2,
-        numericInput(
-          ns('inPlotHierSparMarginY'),
-          'Right margin',
-          10,
-          min = 1,
-          width = 100
-        )
-      ),
-      column(
-        2,
-        numericInput(
-          ns('inPlotHierSparFontX'),
-          'Font size row labels',
-          1,
-          min = 0,
-          width = 100,
-          step = 0.1
-        )
-      ),
-      column(
-        2,
-        numericInput(
-          ns('inPlotHierSparFontY'),
-          'Font size column labels',
-          1,
-          min = 0,
-          width = 100,
-          step = 0.1
-        )
-      ),
-      column(2,
-             numericInput(
-               ns('inPlotHeight'),
-               'Display plot height',
-               value = 1000,
-               min = 100,
-               step = 100
-             ),
-             numericInput(
-               ns('inPlotWidth'),
-               'Display plot width',
-               value = 800,
-               min = 100,
-               step = 100
-             )
       )
     ),
-    br(),
+
+    checkboxInput(ns('chBdownload'),
+                  'Download plot or data',
+                  FALSE),
+    conditionalPanel(
+      condition = "input.chBdownload",
+      ns = ns,
+      
+      fluidRow(
+        column(4,
+               
+               downloadButton(ns('downClAssSpar'), 'Cluster assignments'),
+               bsTooltip(ns("downClAssSpar"),
+                         helpText.clHierSpar[["downClAss"]],
+                         placement = "top",
+                         trigger = "hover",
+                         options = NULL)
+        ),
+        
+        column(4,
+               
+               downloadButton(ns('downDendSpar'), 'Dendrogram object'),
+               bsTooltip(ns("downDendSpar"),
+                         helpText.clHierSpar[["downDend"]],
+                         placement = "top",
+                         trigger = "hover",
+                         options = NULL))
+      ),
+      downPlotUI(ns('downPlotHierSparPNG'), "")
+    ),
     
-    downPlotUI(ns('downPlotHierSparPNG'), "Download PNG"),
-    
-    br(),
-    checkboxInput(ns('inPlotHierSparInteractive'), 'Interactive Plot',  value = FALSE),
-    uiOutput(ns("plotHierSparInt_ui"))
+    checkboxInput(ns('inPlotHierSparInteractive'), 
+                  'Interactive Plot',  
+                  value = FALSE),
+    uiOutput(ns("plotUI"))
   )
 }
 
 # SERVER ----
 clustHierSpar <- function(input, output, session, dataMod) {
   ns = session$ns
-  
-  # UI for advanced options
-  output$uiPlotHierSparNperms = renderUI({
-    ns <- session$ns
-    
-    if (input$inHierSparAdv)
-      sliderInput(
-        ns('inPlotHierSparNperms'),
-        'Number of permutations',
-        min = 1,
-        max = 20,
-        value = 10,
-        step = 1,
-        ticks = TRUE
-      )
-  })
-  
-  # UI for advanced options
-  output$uiPlotHierSparNiter = renderUI({
-    ns <- session$ns
-    
-    if (input$inHierSparAdv)
-      sliderInput(
-        ns('inPlotHierSparNiter'),
-        'Number of iterations',
-        min = 1,
-        max = 50,
-        value = 15,
-        step = 1,
-        ticks = TRUE
-      )
-  })
-  
   
   userFitHierSpar <- reactive({
     cat(file = stdout(), 'userFitHierSpar \n')
@@ -242,14 +269,14 @@ clustHierSpar <- function(input, output, session, dataMod) {
     perm.out <- HierarchicalSparseCluster.permute(
       loc.dm,
       wbounds = NULL,
-      nperms = ifelse(input$inHierSparAdv, input$inPlotHierSparNperms, 10),
+      nperms = input$inPlotHierSparNperms,
       dissimilarity = input$selectPlotHierSparDist
     )
     
     sparsehc <- HierarchicalSparseCluster(
       dists = perm.out$dists,
       wbound = perm.out$bestw,
-      niter = ifelse(input$inHierSparAdv, input$inPlotHierSparNiter, 15),
+      niter = input$inPlotHierSparNiter,
       method = input$selectPlotHierSparLinkage,
       dissimilarity = input$selectPlotHierSparDist
     )
@@ -293,7 +320,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   })
   
   # download a list of IDs with cluster assignments
-  output$downCellClSpar <- downloadHandler(
+  output$downClAssSpar <- downloadHandler(
     filename = function() {
       paste0('clust_hierchSpar_data_',
              input$selectPlotHierSparDist,
@@ -302,9 +329,28 @@ clustHierSpar <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      write.csv(x = getDataClSpar(userFitDendHierSpar(), input$inPlotHierSparNclust, getDataIDs()), file = file, row.names = FALSE)
+      fwrite(x = getDataClSpar(userFitDendHierSpar(), 
+                               input$inPlotHierSparNclust, 
+                               getDataIDs()), 
+             file = file, 
+             row.names = FALSE)
     }
   )
+  
+  # download an RDS file with dendrogram objet
+  output$downDendSpar <- downloadHandler(
+    filename = function() {
+      paste0('clust_hierSpar_dend_',
+             input$selectPlotHierSparDist,
+             '_',
+             input$selectPlotHierSparLinkage, '.rds')
+    },
+    
+    content = function(file) {
+      saveRDS(object = userFitDendHierSpar(), file = file)
+    }
+  )
+  
   
   # Function instead of reactive as per:
   # http://stackoverflow.com/questions/26764481/downloading-png-from-shiny-r
@@ -417,16 +463,14 @@ clustHierSpar <- function(input, output, session, dataMod) {
     cat(file = stdout(), 'plotHierSparInt \n')
     
     loc.dm = dataMod()
-    if (is.null(loc.dm))
-      return(NULL)
-    
     loc.sphc <- userFitHierSpar()
-    if (is.null(loc.sphc))
-      return(NULL)
+    loc.dend <- userFitDendHierSpar()
     
-    loc.dend <- as.dendrogram(loc.sphc$hc)
-    loc.dend <-
-      color_branches(loc.dend, k = input$inPlotHierSparNclust)
+    validate(
+      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(loc.sphc), "Did not cluster"),
+      need(!is.null(loc.dend), "Did not create dendrogram")
+    )
     
     if (input$inPlotHierSparRevPalette)
       my_palette <-
@@ -494,7 +538,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   })
   
   # Sparse Hierarchical - choose to display a regular heatmap.2 or d3heatmap (interactive)
-  output$plotHierSparInt_ui <- renderUI({
+  output$plotUI <- renderUI({
     ns <- session$ns
     
     if (input$inPlotHierSparInteractive)

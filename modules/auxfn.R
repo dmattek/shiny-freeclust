@@ -38,8 +38,9 @@ PLOTNFACETDEFAULT = 3
 
 helpText.server = c(
   alDataFormat =  paste0(
-    "<p>Accepts CSV text file with samples as columns and measurements (features) as rows. ",
-    "First row should contain sample names; first column should contain feature names.</p>"),
+    "<p>Accepts a CSV text file in wide format. ",
+    "First row should contain sample names; first column should contain feature/measurement names. ",
+    "Or vice versa. Rows/columns can be flipped in the UI.</p>"),
   alertNegPresent  = "Data points smaller than or equal to zero are present. Before applying log10(x), such data points will be transformed to NAs.",
   alertNegPresent1 = "Data points smaller than or equal to -1 are present. Before applying log10(x+1), such data points will be transformed to NAs."
 )
@@ -137,10 +138,18 @@ getDataCl = function(in.dend, in.k) {
   require(data.table)
   cat(file = stdout(), 'getDataCl \n')
   
-  loc.m = dendextend::cutree(in.dend, in.k, order_clusters_as_data = TRUE)
+  if (is.null(in.dend))
+    return(NULL)
+  
+  if (is.null(in.k) | in.k == 0)
+    return(NULL)
+  
+  loc.m = dendextend::cutree(in.dend, 
+                             in.k, 
+                             order_clusters_as_data = TRUE)
   #print(loc.m)
   
-  # The result of cutree containes named vector with names being cell id's
+  # The result of cutree contains named vector with names being cell id's
   # THIS WON'T WORK with sparse hierarchical clustering because there, the dendrogram doesn't have original id's
   loc.dt.cl = data.table(id = names(loc.m),
                          cl = loc.m)
@@ -164,10 +173,21 @@ getDataClSpar = function(in.dend, in.k, in.id) {
   require(data.table)
   cat(file = stdout(), 'getDataClSpar \n')
   
-  loc.m = dendextend::cutree(in.dend, in.k, order_clusters_as_data = TRUE)
+  if (is.null(in.dend))
+    return(NULL)
+
+  if (is.null(in.k) | in.k == 0)
+    return(NULL)
+  
+  if(is.null(in.id))
+    return(NULL)
+    
+  loc.m = dendextend::cutree(in.dend, 
+                             in.k, 
+                             order_clusters_as_data = TRUE)
   #print(loc.m)
   
-  # The result of cutree containes named vector with names being cell id's
+  # The result of cutree contains named vector with names being cell id's
   # THIS WON'T WORK with sparse hierarchical clustering because there, the dendrogram doesn't have original id's
   loc.dt.cl = data.table(id = in.id,
                          cl = loc.m)

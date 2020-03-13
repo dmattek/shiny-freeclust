@@ -25,15 +25,31 @@ shinyUI(fluidPage(
         actionLink("alDataFormat", 'Select file and click Load Data'),
         accept = c('text/csv', 'text/comma-separated-values,text/plain')
       ),
+      
+      radioButtons(
+        "rBflipRowCol",
+        "Samples in:",
+        choices = list(
+          "rows" = "row",
+          "columns" = "col"
+        ),
+        selected = "row"
+      ),
+      bsTooltip("rBflipRowCol", 
+                "Layout of data in the input file.",
+                placement = "top",
+                trigger = "hover"),
+      
+      
       radioButtons(
         'rButDataNA',
         'Missing values represented by:',
         choices = list(
-          'NA' = 'NA',
-          'Dash -' = '-',
-          'Empty space' = ''
+          'empty space' = '',
+          'dash "-"' = '-',
+          'NA' = 'NA'
         ),
-        selected = '-'
+        selected = ''
       ),
       radioButtons(
         'rButDataSep',

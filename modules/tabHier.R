@@ -33,7 +33,9 @@ helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the da
                                          "Instead of comparing features one by one, DTW tries to align and match their shapes. ",
                                          "This makes DTW a good quantification of similarity when the order of features matters, as is the case in time series.</p>",
                                          "<p>In the second step, clusters are successively built and merged together. The distance between the newly formed clusters is determined by the <b>linkage criterion</b> ",
-                                         "using one of <a href=\"https://en.wikipedia.org/wiki/Hierarchical_clustering\" target=\"_blank\" title=\"External link\">linkage methods</a>.</p>"))
+                                         "using one of <a href=\"https://en.wikipedia.org/wiki/Hierarchical_clustering\" target=\"_blank\" title=\"External link\">linkage methods</a>.</p>"),
+                    downClAss = "Download a CSV with cluster assignments to time series ID",
+                    downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.")
 
 # UI
 clustHierUI <- function(id, label = "Hierarchical CLustering") {
@@ -96,8 +98,9 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
           ticks = TRUE,
           round = TRUE
         ),
-        downloadButton(ns('downCellCl'), 'Download CSV with cluster associations')
+        
       ),
+      
       column(
         3,
         selectInput(
@@ -138,70 +141,103 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
     ),
     
     br(),
-    fluidRow(
-      column(2,
-             numericInput(
-               ns('inMarginX'),
-               'Bottom margin',
-               10,
-               min = 1,
-               width = 100
-             )
-      ),
-      column(2,
-             numericInput(
-               ns('inMarginY'),
-               'Right margin',
-               10,
-               min = 1,
-               width = 100
-             )
-      ),
-      column(2,
-             numericInput(
-               ns('inFontX'),
-               'Font size row labels',
-               1,
-               min = 0,
-               width = 100,
-               step = 0.1
-             )
-      ),
-      column(2,
-             numericInput(
-               ns('inFontY'),
-               'Font size column labels',
-               1,
-               min = 0,
-               width = 100,
-               step = 0.1
-             )
-      ),
-      column(2,
-             numericInput(
-               ns('inPlotHeight'),
-               'Display plot height',
-               value = 1000,
-               min = 100,
-               step = 100
-             ),
-             numericInput(
-               ns('inPlotWidth'),
-               'Display plot width',
-               value = 800,
-               min = 100,
-               step = 100
-             )
+    checkboxInput(ns('chBplotStyle'),
+                  'Adjust plot',
+                  FALSE),
+    conditionalPanel(
+      condition = "input.chBplotStyle",
+      ns = ns,
+      fluidRow(
+        column(2,
+               numericInput(
+                 ns('inMarginX'),
+                 'Bottom margin',
+                 10,
+                 min = 1,
+                 width = 100
+               )
+        ),
+        column(2,
+               numericInput(
+                 ns('inMarginY'),
+                 'Right margin',
+                 10,
+                 min = 1,
+                 width = 100
+               )
+        ),
+        column(2,
+               numericInput(
+                 ns('inFontX'),
+                 'Font size row labels',
+                 1,
+                 min = 0,
+                 width = 100,
+                 step = 0.1
+               )
+        ),
+        column(2,
+               numericInput(
+                 ns('inFontY'),
+                 'Font size column labels',
+                 1,
+                 min = 0,
+                 width = 100,
+                 step = 0.1
+               )
+        ),
+        column(2,
+               numericInput(
+                 ns('inPlotHeight'),
+                 'Display plot height',
+                 value = 1000,
+                 min = 100,
+                 step = 100
+               ),
+               numericInput(
+                 ns('inPlotWidth'),
+                 'Display plot width',
+                 value = 800,
+                 min = 100,
+                 step = 100
+               )
+        )
       )
     ),
-    br(),
-    downPlotUI(ns('downPlotHierPNG'), "Download PNG"),
     
-    br(),
+    checkboxInput(ns('chBdownload'),
+                  'Download plot or data',
+                  FALSE),
+    conditionalPanel(
+      condition = "input.chBdownload",
+      ns = ns,
+      
+      fluidRow(
+        column(4,
+               downloadButton(ns('downClAss'), 'Cluster assignments'),
+               bsTooltip(ns("downClAss"),
+                         helpText.clHier[["downClAss"]],
+                         placement = "top",
+                         trigger = "hover",
+                         options = NULL)
+               ),
+        column(4,
+               downloadButton(ns('downDend'), 'Dendrogram object'),
+               bsTooltip(ns("downDend"),
+                         helpText.clHier[["downDend"]],
+                         placement = "top",
+                         trigger = "hover",
+                         options = NULL)
+               )
+      ),
+      
+      downPlotUI(ns('downPlotHierPNG'), "")
+    ),
+    
     checkboxInput(ns('plotInt'), 
                   'Interactive Plot',
                   value = FALSE),
-    uiOutput(ns("plotInt_ui"))
+    uiOutput(ns("plotUI"))
     
   )
 }
@@ -257,7 +293,8 @@ clustHier <- function(input, output, session, dataMod) {
     
     
     #pr_DB$set_entry(FUN = fastDTW, names = c("fastDTW"))
-    cl.dist = proxy::dist(loc.dm, method = input$selectDist)
+    cl.dist = proxy::dist(loc.dm, 
+                          method = input$selectDist)
     
     return(cl.dist)
   })
@@ -298,7 +335,7 @@ clustHier <- function(input, output, session, dataMod) {
   
   
   # download a list of IDs with cluster assignments
-  output$downCellCl <- downloadHandler(
+  output$downClAss <- downloadHandler(
     filename = function() {
       paste0('clust_hierch_data_',
              input$selectDist,
@@ -308,7 +345,24 @@ clustHier <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      write.csv(x = getDataCl(userFitDendHier(), input$slPlotHierNclust), file = file, row.names = FALSE)
+      fwrite(x = getDataCl(userFitDendHier(), 
+                           input$slPlotHierNclust), 
+             file = file, 
+             row.names = FALSE)
+    }
+  )
+  
+  # download an RDS file with dendrogram objet
+  output$downDend <- downloadHandler(
+    filename = function() {
+      paste0('clust_hier_dend_',
+             input$selectDist,
+             '_',
+             input$selectLinkage, '.rds')
+    },
+    
+    content = function(file) {
+      saveRDS(object = userFitDendHier(), file = file)
     }
   )
   
@@ -321,13 +375,13 @@ clustHier <- function(input, output, session, dataMod) {
   plotHier <- function() {
     cat(file = stdout(), 'plotHier \n')
     
-    in.dm = dataMod()
-    if (is.null(in.dm))
-      return(NULL)
+    loc.dm = dataMod()
+    loc.dend <- userFitDendHier()
     
-    in.dend <- userFitDendHier()
-    if (is.null(in.dend))
-      return(NULL)
+    validate(
+      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(loc.dend), "Did not create dendrogram")
+    )
     
     if (input$inRevPalette)
       my_palette <-
@@ -337,11 +391,11 @@ clustHier <- function(input, output, session, dataMod) {
       colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99)
     
     
-    col_labels <- get_leaves_branches_col(in.dend)
-    col_labels <- col_labels[order(order.dendrogram(in.dend))]
+    col_labels <- get_leaves_branches_col(loc.dend)
+    col_labels <- col_labels[order(order.dendrogram(loc.dend))]
     
     if (input$selectDend) {
-      assign("var.tmp.1", in.dend)
+      assign("var.tmp.1", loc.dend)
       var.tmp.2 = "row"
     } else {
       assign("var.tmp.1", FALSE)
@@ -349,7 +403,7 @@ clustHier <- function(input, output, session, dataMod) {
     }
     
     heatmap.2(
-      in.dm,
+      loc.dm,
       Colv = "NA",
       Rowv = var.tmp.1,
       srtCol = 90,
@@ -364,8 +418,8 @@ clustHier <- function(input, output, session, dataMod) {
       RowSideColors = col_labels,
       colRow = col_labels,
       sepcolor = if (input$inDispGrid) grey(input$inGridColor) else NULL,
-      colsep = if (input$inDispGrid) 1:ncol(in.dm) else NULL,
-      rowsep = if (input$inDispGrid) 1:nrow(in.dm) else NULL,
+      colsep = if (input$inDispGrid) 1:ncol(loc.dm) else NULL,
+      rowsep = if (input$inDispGrid) 1:nrow(loc.dm) else NULL,
       cexRow = input$inFontX,
       cexCol = input$inFontY,
       main = paste(
@@ -399,12 +453,12 @@ clustHier <- function(input, output, session, dataMod) {
     cat(file = stdout(), 'Int \n')
     
     loc.dm = dataMod()
-    if (is.null(loc.dm))
-      return(NULL)
-    
     loc.dend <- userFitDendHier()
-    if (is.null(loc.dend))
-      return(NULL)
+    
+    validate(
+      need(!is.null(loc.dm), "Nothing to plot. Load data first!"),
+      need(!is.null(loc.dend), "Did not create dendrogram")
+    )
     
     if (input$inRevPalette)
       my_palette <-
@@ -459,7 +513,7 @@ clustHier <- function(input, output, session, dataMod) {
   })
   
   # Hierarchical - choose to display regular heatmap.2 or d3heatmap (interactive)
-  output$plotInt_ui <- renderUI({
+  output$plotUI <- renderUI({
     ns <- session$ns
     if (input$plotInt)
       tagList(d3heatmapOutput(ns("outPlotInt"), height = paste0(input$inPlotHeight, "px"), width = paste0(input$inPlotWidth, "px")))
