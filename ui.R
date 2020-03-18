@@ -67,15 +67,13 @@ shinyUI(fluidPage(
       ),
       actionButton("butDataLoad",  'Load Data'),
       
-      actionButton("butDataGen1", 'Synthetic data'),
-      
       actionButton("butReset", "Reset file input"),
+      
+      actionButton("butDataGen1", 'Synthetic data'),
       bsTooltip("butDataGen1", 
                 "Use classic iris dataset for testing.",
                 placement = "top",
                 trigger = "hover")
-      
-
     ),
     
     mainPanel(
@@ -99,11 +97,6 @@ shinyUI(fluidPage(
           clustHierSparUI('TabClustHierSpar')
         ),
         
-        # Bayesian (bclust)
-        # The package is not available on CRAN anymore,
-        # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
-        # then uncomment here, in server.R and in global.R
-        #
         tabPanel(
           'Bayesian',
           clustBayUI('TabClustBay')

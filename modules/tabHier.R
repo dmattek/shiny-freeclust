@@ -15,17 +15,17 @@
 # that returns a dataset in wide format ready for clustering
 
 
-require(gplots) # heatmap.2
+require(pheatmap)
 require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
-require(d3heatmap) # interactive heatmap
+require(heatmaply) # for interactive heatmap
 require(shinyBS) # for tooltips
 require(shinycssloaders) # for loader animations
 
-helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the dataset. DTW cannot calculate the distance. "),
+helpText.clHier = c(alertNAsPresentClDTW = paste0("NAs (still) present in the dataset. DTW cannot calculate the distance."),
                     alertNAsPresentCl = paste0("NAs (still) present in the dataset, caution recommended."),
                     alertNAsPresentDist = "Calculation of the distance matrix yielded NAs. Dataset might be too sparse",
-                    alLearnMore = paste0("<p><a href=\"https://en.wikipedia.org/wiki/Hierarchical_clustering\" target=\"_blank\" title=\"External link\">Agglomerative hierarchical clustering</a> ",
+                    alLearnMore = paste0("<p>Agglomerative <a href=\"https://en.wikipedia.org/wiki/Hierarchical_clustering\" target=\"_blank\" title=\"External link\">hierarchical clustering</a> ",
                                          "initially assumes that all data points are forming their own clusters. It then grows a clustering dendrogram using two inputs:<p>",
                                          "A <b>dissimilarity matrix</b> between sample pairs ",
                                          "is calculated with one of the metrics, such as ",
@@ -61,84 +61,51 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
     br(),
     
     fluidRow(
-      column(
-        3,
-        selectInput(
-          ns("selectDist"),
-          label = ("Dissimilarity measure"),
-          choices = list("Euclidean" = "euclidean",
-                         "Manhattan" = "manhattan",
-                         "Maximum"   = "maximum",
-                         "Canberra"  = "canberra",
-                         "DTW" = "DTW"),
-          selected = 1
-        ),
-        bsAlert("alertAnchorClHierNAsPresent"),
-        selectInput(
-          ns("selectLinkage"),
-          label = ("Linkage method"),
-          choices = list(
-            "Average"  = "average",
-            "Complete" = "complete",
-            "Single"   = "single",
-            "Centroid" = "centroid",
-            "Ward"     = "ward.D",
-            "Ward D2"  = "ward.D2",
-            "McQuitty" = "mcquitty"),
-          selected = 1
-        ),
-        checkboxInput(ns('selectDend'), 
-                      'Plot dendrogram and re-order samples', 
-                      TRUE),
-        sliderInput(
-          ns('slNclust'),
-          'Number of dendrogram branches to cut',
-          min = 1,
-          max = 10,
-          value = 1,
-          step = 1,
-          ticks = TRUE,
-          round = TRUE
-        ),
-        
+      
+      column(4,
+             sliderInput(
+               ns('slNclust'),
+               'Number of dendrogram branches to cut',
+               min = 1,
+               max = 10,
+               value = 1,
+               step = 1,
+               ticks = TRUE,
+               round = TRUE)
       ),
       
-      column(
-        3,
-        selectInput(
-          ns("selectPalette"),
-          label = "Heatmap\'s colour palette:",
-          choices = l.col.pal,
-          selected = 'Spectral'
-        ),
-        selectInput(
-          ns("selectPlotHierPaletteDend"),
-          label = "Dendrogram\'s colour palette",
-          choices = l.col.pal.dend,
-          selected = 'Color Blind'
-        ),
-        checkboxInput(ns('inRevPalette'), 
-                      'Reverse colour palette', 
-                      TRUE),
-        checkboxInput(ns('selectKey'), 
-                      'Plot colour key', 
-                      TRUE)
-      ),
-      column(
-        3,
-        checkboxInput(ns('inDispGrid'), 
-                      'Display grid lines', 
-                      FALSE),
-        uiOutput(ns('inGridColorUI')),
-        sliderInput(
-          ns('inNAcolor'),
-          'Shade of grey for NA values',
-          min = 0,
-          max = 1,
-          value = 0.8,
-          step = .1,
-          ticks = TRUE
-        )
+      column(6,
+             fluidRow(
+               column(
+                 6,
+                 selectInput(
+                   ns("selectDist"),
+                   label = ("Dissimilarity measure"),
+                   choices = list("Euclidean" = "euclidean",
+                                  "Manhattan" = "manhattan",
+                                  "Maximum"   = "maximum",
+                                  "Canberra"  = "canberra",
+                                  "DTW" = "DTW"),
+                   selected = 1
+                 ),
+               ),
+               
+               column(6,
+                      selectInput(
+                        ns("selectLinkage"),
+                        label = ("Linkage method"),
+                        choices = list(
+                          "Average"  = "average",
+                          "Complete" = "complete",
+                          "Single"   = "single",
+                          "Centroid" = "centroid",
+                          "Ward"     = "ward.D",
+                          "Ward D2"  = "ward.D2",
+                          "McQuitty" = "mcquitty"),
+                        selected = 1),
+               ),
+             ),
+             bsAlert("alertAnchorClHierNAsPresent"),
       )
     ),
     
@@ -149,56 +116,107 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
     conditionalPanel(
       condition = "input.chBplotStyle",
       ns = ns,
+      
       fluidRow(
-        column(2,
-               numericInput(
-                 ns('inMarginX'),
-                 'Bottom margin',
-                 10,
-                 min = 1,
-                 width = 100
-               )
+        
+        column(
+          4,
+          
+          sliderInput(
+            ns('slNAcolor'),
+            'Shade of grey for NA values',
+            min = 0,
+            max = 1,
+            value = 0.8,
+            step = .1,
+            ticks = TRUE),
+          
+          checkboxInput(ns('chBdispGrid'), 
+                        'Display grid lines', 
+                        FALSE),
+          conditionalPanel(
+            condition = "input.chBdispGrid",
+            ns = ns,
+            
+            sliderInput(
+              ns('slGridColor'),
+              'Shade of grey for grid lines',
+              min = 0,
+              max = 1,
+              value = 0.6,
+              step = .1,
+              ticks = TRUE)
+          ),
+          
         ),
-        column(2,
-               numericInput(
-                 ns('inMarginY'),
-                 'Right margin',
-                 10,
-                 min = 1,
-                 width = 100
-               )
+        
+        column(
+          3,
+          
+          selectInput(
+            ns("selectPalette"),
+            label = "Heatmap\'s colour palette:",
+            choices = l.col.pal,
+            selected = 'RdYlBu'
+          ),
+          
+          checkboxInput(ns('inRevPalette'), 
+                        'Reverse colour palette', 
+                        TRUE),
+          
         ),
+        
+        column(
+          3,
+          
+          selectInput(
+            ns("selectPaletteDend"),
+            label = "Dendrogram\'s colour palette",
+            choices = l.col.pal.dend,
+            selected = 'Color Blind'
+          ),
+          
+          checkboxInput(ns('selectDend'), 
+                        'Plot dendrogram and re-order samples', 
+                        TRUE),
+          
+        ),
+      ),
+      
+      fluidRow(
         column(2,
                numericInput(
                  ns('inFontX'),
                  'Font size row labels',
-                 1,
-                 min = 0,
+                 10,
+                 min = 1,
                  width = 100,
-                 step = 0.1
+                 step = 1
                )
         ),
         column(2,
                numericInput(
                  ns('inFontY'),
                  'Font size column labels',
-                 1,
-                 min = 0,
+                 10,
+                 min = 1,
                  width = 100,
-                 step = 0.1
+                 step = 1
                )
         ),
-        column(2,
+        column(3,
                numericInput(
                  ns('inPlotHeight'),
-                 'Display plot height',
-                 value = 1000,
+                 'Plot height',
+                 value = 800,
                  min = 100,
                  step = 100
                ),
+        ),
+        column(3,
                numericInput(
                  ns('inPlotWidth'),
-                 'Display plot width',
+                 'Plot width',
                  value = 800,
                  min = 100,
                  step = 100
@@ -215,22 +233,22 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
       ns = ns,
       
       fluidRow(
-        column(4,
+        column(3,
                downloadButton(ns('downClAss'), 'Cluster assignments'),
                bsTooltip(ns("downClAss"),
                          helpText.clHier[["downClAss"]],
                          placement = "top",
                          trigger = "hover",
                          options = NULL)
-               ),
-        column(4,
+        ),
+        column(3,
                downloadButton(ns('downDend'), 'Dendrogram object'),
                bsTooltip(ns("downDend"),
                          helpText.clHier[["downDend"]],
                          placement = "top",
                          trigger = "hover",
                          options = NULL)
-               )
+        )
       ),
       
       downPlotUI(ns('downPlotHierPNG'), "")
@@ -258,7 +276,7 @@ clustHier <- function(input, output, session, dataMod) {
   # calculate distance matrix for further clustering
   # samples arranged in rows with columns corresponding to measurements/features
   calcDist <- reactive({
-    cat(file = stdout(), 'calcDist \n')
+    cat(file = stdout(), 'tabHier:calcDist\n')
     
     locDM = dataMod()
     
@@ -294,21 +312,20 @@ clustHier <- function(input, output, session, dataMod) {
     }
     
     
-    #pr_DB$set_entry(FUN = fastDTW, names = c("fastDTW"))
-    cl.dist = proxy::dist(locDM, 
+    locDist = proxy::dist(locDM, 
                           method = input$selectDist)
     
-    return(cl.dist)
+    return(locDist)
   })
   
-  calcDend <- reactive({
-    cat(file = stdout(), 'calcDend \n')
+  calcHC <- reactive({
+    cat(file = stdout(), 'tabHier:calcHC\n')
     
-    loc.dist = calcDist()
+    locDist = calcDist()
     
-    if (is.null(loc.dist)) {
+    if (is.null(locDist)) {
       return(NULL)
-    } else if (sum(is.na(loc.dist)) > 0) {
+    } else if (sum(is.na(locDist)) > 0) {
       createAlert(session, "alertAnchorClHierNAsPresent", "alertNAsPresentDist", title = "Error",
                   content = helpText.clHier[["alertNAsPresentDist"]], 
                   append = FALSE, 
@@ -319,20 +336,11 @@ clustHier <- function(input, output, session, dataMod) {
       closeAlert(session, "alertNAsPresentDist")
     }
     
-    loc.cl.hc = hclust(loc.dist, method = input$selectLinkage)
+    # Perform hierarchical clustering
+    locClHc = hclust(locDist, 
+                     method = input$selectLinkage)
     
-    # number of clusters at which dendrogram is cut
-    loc.k = returnNclust()
-    
-    # make a palette with the amount of colours equal to the number of clusters
-    loc.col = ggthemes::tableau_color_pal(input$selectPlotHierPaletteDend)(n = loc.k)
-    
-    loc.dend <- as.dendrogram(loc.cl.hc)
-    loc.dend <- color_branches(loc.dend, 
-                               col = loc.col,
-                               k = loc.k)
-    
-    return(loc.dend)
+    return(locClHc)
   })
   
   
@@ -347,8 +355,8 @@ clustHier <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      fwrite(x = myGetDataCl(calcDend(), 
-                           input$slNclust), 
+      fwrite(x = myGetDataCl(calcHC(), 
+                             input$slNclust), 
              file = file, 
              row.names = FALSE)
     }
@@ -364,7 +372,7 @@ clustHier <- function(input, output, session, dataMod) {
     },
     
     content = function(file) {
-      saveRDS(object = calcDend(), file = file)
+      saveRDS(object = calcHC(), file = file)
     }
   )
   
@@ -372,58 +380,68 @@ clustHier <- function(input, output, session, dataMod) {
   
   # Function instead of reactive as per:
   # http://stackoverflow.com/questions/26764481/downloading-png-from-shiny-r
-  # This function is used to plot and to downoad a pdf
+  # This function is used to plot and to download a pdf
   
   plotHier <- function() {
-    cat(file = stdout(), 'plotHier \n')
+    cat(file = stdout(), 'tabHier:plotHier\n')
     
     locDM = dataMod()
-    loc.dend <- calcDend()
+    locHC <- calcHC()
     
     validate(
       need(!is.null(locDM), "Nothing to plot. Load data first!"),
-      need(!is.null(loc.dend), "Did not create dendrogram")
+      need(!is.null(locHC), "Did not cluster")
     )
     
+    # Set colors palette for the heatmap
     if (input$inRevPalette)
-      my_palette <-
+      locColorHM <-
       rev(colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99))
     else
-      my_palette <-
+      locColorHM <-
       colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99)
     
+    # number of clusters at which dendrogram is cut
+    locNclust = returnNclust()
     
-    col_labels <- get_leaves_branches_col(loc.dend)
-    col_labels <- col_labels[order(order.dendrogram(loc.dend))]
+    # make a palette for the dendrogram with the amount of colours equal to the number of clusters
+    locColorDend = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = locNclust)
+    names(locColorDend) = seq(1, locNclust, 1)
     
+    # Create row-side annotations
+    locRowAnnotation <- as.data.frame(
+      dendextend::cutree(tree = locHC, 
+                         k = locNclust))
+    names(locRowAnnotation) = "cluster"
+    rownames(locRowAnnotation) = rownames(locDM)
+    
+    # pheatmap accepts direct output from hclust,
+    # NOT as.dendrogram(x)
     if (input$selectDend) {
-      assign("var.tmp.1", loc.dend)
-      var.tmp.2 = "row"
+      assign("var.tmp.1", locHC)
     } else {
       assign("var.tmp.1", FALSE)
-      var.tmp.2 = "none"
     }
     
-    heatmap.2(
+    
+    pheatmap::pheatmap(
       locDM,
-      Colv = "NA",
-      Rowv = var.tmp.1,
-      srtCol = 90,
-      dendrogram = var.tmp.2,
-      trace = "none",
-      key = input$selectKey,
-      margins = c(input$inMarginX, input$inMarginY),
-      col = my_palette,
-      na.col = grey(input$inNAcolor),
-      denscol = "black",
-      density.info = "density",
-      RowSideColors = col_labels,
-      colRow = col_labels,
-      sepcolor = if (input$inDispGrid) grey(input$inGridColor) else NULL,
-      colsep = if (input$inDispGrid) 1:ncol(locDM) else NULL,
-      rowsep = if (input$inDispGrid) 1:nrow(locDM) else NULL,
-      cexRow = input$inFontX,
-      cexCol = input$inFontY,
+      color = locColorHM,
+      cluster_rows = var.tmp.1,
+      cluster_cols = FALSE,
+      cutree_rows = locNclust,
+      annotation_colors = list(cluster = locColorDend),
+      annotation_row = locRowAnnotation, 
+      annotation_names_row = F,
+      legend = T, 
+      annotation_legend = F,
+      na_col = grey(input$slNAcolor),
+      border_color = ifelse(input$chBdispGrid, 
+                            grey(input$slGridColor), 
+                            NA),
+      fontsize_col = input$inFontY,
+      fontsize_row = input$inFontX,
+      angle_col = c("45"),
       main = paste(
         "Distance measure: ",
         input$selectDist,
@@ -451,80 +469,89 @@ clustHier <- function(input, output, session, dataMod) {
   callModule(downPlot, "downPlotHierPNG", createFnameHeatMap, plotHier)
   
   # Hierarchical clustering - interactive version
-  output$outPlotInt <- renderD3heatmap({
-    cat(file = stdout(), 'Int \n')
+  output$outPlotInt <- renderPlotly({
+    cat(file = stdout(), 'tabHier:outPlotInt\n')
     
     locDM = dataMod()
-    loc.dend <- calcDend()
+    locHC = calcHC()
     
     validate(
       need(!is.null(locDM), "Nothing to plot. Load data first!"),
-      need(!is.null(loc.dend), "Did not create dendrogram")
+      need(!is.null(locHC), "Did not perform clustering")
     )
     
+    # Set colors palette for the heatmap
     if (input$inRevPalette)
-      my_palette <-
+      locColorHM <-
       rev(colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99))
     else
-      my_palette <-
+      locColorHM <-
       colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99)
     
+    # number of clusters at which dendrogram is cut
+    locNclust = returnNclust()
     
-    col_labels <- get_leaves_branches_col(loc.dend)
-    col_labels <- col_labels[order(order.dendrogram(loc.dend))]
+    # make a palette for the dendrogram with the amount of colours equal to the number of clusters
+    locColorDend = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = locNclust)
+    names(locColorDend) = seq(1, locNclust, 1)
+    
+    # Create row-side annotations
+    locDend = as.dendrogram(locHC)
+    locRowAnnotation <- as.data.frame(
+      dendextend::cutree(tree = locDend, 
+                         k = locNclust))
+    names(locRowAnnotation) = "cluster"
+    
+    # Uncomment to have dendrogram branches coloured the same as side annotations.
+    # The static plot has a regular black dendrogram, thus commented here for consistency.
+    # locDend <- dendextend::color_branches(locDend, 
+    #                                       col = locColorDend,
+    #                                       k = locNclust)
+    
     
     if (input$selectDend) {
-      assign("var.tmp.1", loc.dend)
+      assign("var.tmp.1", locDend)
       var.tmp.2 = "row"
     } else {
       assign("var.tmp.1", FALSE)
       var.tmp.2 = "none"
     }
     
-    d3heatmap(
-      locDM,
+    heatmaply(
+      locDM, 
       Rowv = var.tmp.1,
       dendrogram = var.tmp.2,
       trace = "none",
-      revC = FALSE,
-      na.rm = FALSE,
-      margins = c(input$inMarginX * 10, input$inMarginY * 10),
-      colors = my_palette,
-      na.col = grey(input$inNAcolor),
-      cexRow = input$inFontY * 0.5,
-      cexCol = input$inFontX * 0.5,
-      xaxis_height = input$inMarginX * 10,
-      yaxis_width = input$inMarginY * 10,
-      show_grid = TRUE
+      colors = locColorHM, 
+      row_side_colors = locRowAnnotation,
+      row_side_palette = locColorDend,
+      grid_color = ifelse(input$chBdispGrid, grey(input$slGridColor), NA), 
+      na.value = grey(input$slNAcolor),
+      cexCol = input$inFontY * 0.1,
+      cexRow = input$inFontX * 0.1,
+      margins = c(50, 50, 100, 0),
+      xaxis_height = 100,
+      yaxis_width = 100,
+      main = paste(
+        "Distance measure: ",
+        input$selectDist,
+        "\nLinkage method: ",
+        input$selectLinkage
+      )
     )
-  })
-  
-  output$inGridColorUI <- renderUI({
-    ns <- session$ns
-    
-    if(input$inDispGrid) {
-      sliderInput(
-        ns('inGridColor'),
-        'Shade of grey for grid lines',
-        min = 0,
-        max = 1,
-        value = 0.6,
-        step = .1,
-        ticks = TRUE)
-    }
   })
   
   # Hierarchical - choose to display regular heatmap.2 or d3heatmap (interactive)
   output$plotUI <- renderUI({
     ns <- session$ns
     if (input$plotInt)
-        withSpinner(d3heatmapOutput(ns("outPlotInt"), 
-                              height = paste0(input$inPlotHeight, "px"), 
-                              width = paste0(input$inPlotWidth, "px")))
+      plotlyOutput(ns("outPlotInt"), 
+                   height = paste0(input$inPlotHeight, "px"), 
+                   width = paste0(input$inPlotWidth, "px"))
     else
-        withSpinner(plotOutput(ns('outPlotHier'), 
-                               height = paste0(input$inPlotHeight, "px"), 
-                               width = paste0(input$inPlotWidth, "px")))
+      withSpinner(plotOutput(ns('outPlotHier'), 
+                             height = paste0(input$inPlotHeight, "px"), 
+                             width = paste0(input$inPlotWidth, "px")))
   })
   
   # Pop-overs ----

@@ -13,40 +13,47 @@
 # callModule(clustHier, 'TabClustHier', dataMod)
 # where dataMod is the output from a reactive function 
 # that returns a dataset in wide format ready for clustering
-
+#
+# Operations are optionally but not exclusively applied to data in the following order:
+# 1. rescaling (either of: z-score, log10(x), log10(x+1), winsorize)
+# 2. removal of NAs
+# 3. Trimming
+# 4. Clipping
 
 library(magrittr) # provides %>% operator
 library(shinycssloaders) # provides a spinner
 library(shinyBS) # adds alert messages
-require(shinycssloaders) # for loader animations
+library(shinycssloaders) # for loader animations
 
 helpText.dataHist = c(alLearnMore = paste0("<p>Avoid long tails or strong assymetries in the histogram ",
-                                           "by converting your data to Z-scores, taking logarithm of data, ",
-                                           "or by removing the outliers.</p>"),
+                                           "by converting your data to z-scores, taking the logarithm, ",
+                                           "or by removing/clipping the outliers.</p>",
+                                           "<p>Numbers in brackets indicate the order ",
+                                           "of operations applied to the dataset.</p>"),
                       alLearnMoreRescale = paste0("<p>Recsale data using:",
                                                   "<li>z-score - for every measurement across all samples subtract the mean and divide by SD.</li>",
                                                   "<li>log10(x) - transform and convert data ∈(-inf, 0] to NAs.</li>",
                                                   "<li>log10(x+1) - transform and convert data ∈(-inf, -1] to NAs. Useful when data ∈[0, +inf).</li>",
                                                   "<li>winsorize - clip data points that are farther than 3x robust SD (MAD).</li>",
                                                   "</p>"),
-                      chBdataTrim = "Remove data points outside of the range and set them to NA.",
-                      chBdataClip = "Remove data points outside of the range and set them to range limits.",
-                      chBdataNA20 = "Convert missing values to 0. Conversion is necessary for some algorithms, e.g. Bayesian."
-)
+                      chBdataTrim = "Remove points outside of the range indicated by red vertical lines in the histogram, and set them to NA. ",
+                      chBdataClip = "Remove points outside of the range indicated by blue vertical lines in the histogram, and set them to range limits.",
+                      chBdataNA20 = "Convert missing values to 0. Conversion is necessary for some algorithms, e.g. Bayesian.",
+                      alertNegPresent0 = "Data points smaller than or equal to 0 are present. Before applying log10(x), such points will be transformed to NAs.",
+                      alertNegPresent1 = "Data points smaller than or equal to -1 are present. Before applying log10(x+1), such points will be transformed to NAs.")
+
 # UI ----
 dataHistUI <- function(id, label = "Histogram") {
   ns <- NS(id)
   
   tagList(
-    h4('Data histogram'),
-    p("Data overview. ",
-      actionLink(ns("alLearnMore"), "Learn more")
-    ),
+    h4('Data overview'),
+    p(actionLink(ns("alLearnMore"), "Learn more")),
     
     br(),
     
     fluidRow(
-      column(4, 
+      column(3, 
              sliderInput(
                ns('slHistBinN'),
                'Number of histogram bins',
@@ -57,46 +64,43 @@ dataHistUI <- function(id, label = "Histogram") {
              )
       ),
       
-      column(4,
-             
-             checkboxInput(ns('chBdataNA20'),
-                           'Convert missing values to 0\'s',
-                           FALSE),
-             bsTooltip(ns("chBdataNA20"), 
-                       helpText.dataHist[["chBdataNA20"]],
-                       placement = "top",
-                       trigger = "hover"),
-             
-             
-             
+      column(3,
              # rescale data
-             bsAlert("alertAnchorNegPresent"),
-             
              selectInput(
                ns("selRescale"),
-               p("Rescale data. ",
-                 actionLink(ns("alLearnMoreRescale"), "Learn more")
-               ),
+               p(actionLink(ns("alLearnMoreRescale"), "[1] Rescale data")),
                choices = c(
                  "no rescaling" = "noresc",
                  "z-score" = "zscore",
                  "log10(x)" = "log10x",
                  "log10(x+1)" = "log10xp1",
                  "winsorize" = "win"), 
-               selected = "noresc"
+               selected = "noresc",
+               width = "75%"
              )
-      )
+      ),
+      
+      column(3,
+             checkboxInput(ns("chBdataNA20"),
+                           "[2] Convert missing values to 0\'s",
+                           FALSE),
+             bsTooltip(ns("chBdataNA20"), 
+                       helpText.dataHist[["chBdataNA20"]],
+                       placement = "top",
+                       trigger = "hover"),
+             bsAlert("alertAnchorNegPresent")
+      ),
       
     ),
     
-    withSpinner(plotOutput(ns('plotHist'), 
-               width = '100%')),
+    plotOutput(ns('plotHist'), 
+               width = '100%'),
     tags$hr(),
     
     fluidRow(
       column(3,
              # trim data
-             checkboxInput(ns('chBdataTrim'), 'Trim data'),
+             checkboxInput(ns('chBdataTrim'), '[3] Trim data'),
              bsTooltip(ns("chBdataTrim"), 
                        helpText.dataHist[["chBdataTrim"]],
                        placement = "top",
@@ -126,7 +130,7 @@ dataHistUI <- function(id, label = "Histogram") {
       
       column(3,
              # clip data
-             checkboxInput(ns('chBdataClip'), 'Clip data'),
+             checkboxInput(ns('chBdataClip'), '[4] Clip data'),
              bsTooltip(ns("chBdataClip"), 
                        helpText.dataHist[["chBdataClip"]],
                        placement = "top",
@@ -183,34 +187,35 @@ dataHist <- function(input, output, session, inDataMod) {
     
     if (!is.null(loc.extr)) {
       paste0('Min = ',
-            formatC(
-              loc.extr,
-              format = "g",
-              big.mark = '\'',
-              decimal.mark = '.'
-            ))
+             formatC(
+               loc.extr,
+               format = "g",
+               big.mark = '\'',
+               decimal.mark = '.'
+             ))
     }
   })
   
   output$dataMax <- renderText({
-    cat(file = stdout(), 'dataMax \n')
-
+    cat(file = stdout(), 'tabHist:dataMax\n')
+    
     loc.extr = calcDataMax()
     
     if (!is.null(loc.extr)) {
       paste0('Max = ',
-            formatC(
-              loc.extr,
-              format = "g",
-              big.mark = '\'',
-              decimal.mark = '.'
-            ))
+             formatC(
+               loc.extr,
+               format = "g",
+               big.mark = '\'',
+               decimal.mark = '.'
+             ))
     }
   })
   
   # Set min/max numeric inputs for trimming and clipping to 
   # min/max values in the data
   observe({
+    cat(file = stdout(), 'tabHist:observe:updateNumericInput\n')
     
     locMin = calcDataMin()
     locMax = calcDataMax()
@@ -239,6 +244,8 @@ dataHist <- function(input, output, session, inDataMod) {
   
   # Reset min/max input fields for trimming
   observeEvent(input$butDataTrimReset, {
+    cat(file = stdout(), 'tabHist:observeEvent:updateNumericInput\n')
+    
     locMin = calcDataMin()
     locMax = calcDataMax()
     
@@ -258,11 +265,13 @@ dataHist <- function(input, output, session, inDataMod) {
   
   # Reset min/max input fields for clipping
   observeEvent(input$butDataClipReset, {
+    cat(file = stdout(), 'tabHist:observeEvent:updateNumericInput\n')
+    
     locMin = calcDataMin()
     locMax = calcDataMax()
     
     if(!is.null(locMin) & (!is.null(locMax))) {
-
+      
       updateNumericInput(session, "inDataClipMin", 
                          value = locMin,
                          min = locMin,
@@ -279,6 +288,8 @@ dataHist <- function(input, output, session, inDataMod) {
   
   # Calculate min/max of data
   calcDataMin = reactive({
+    cat(file = stdout(), 'tabHist:calcDataMin\n')
+    
     locDM = rescaledData()
     
     if (!is.null(locDM)) {
@@ -289,6 +300,8 @@ dataHist <- function(input, output, session, inDataMod) {
   })
   
   calcDataMax = reactive({
+    cat(file = stdout(), 'tabHist:calcDataMax\n')
+    
     locDM = rescaledData()
     
     if (!is.null(locDM)) {
@@ -300,7 +313,6 @@ dataHist <- function(input, output, session, inDataMod) {
   
   # apply rescaling methods
   rescaledData = reactive({
-    
     cat(file = stdout(), 'tabHist:rescaledData\n')
     
     locDM = inDataMod()
@@ -315,24 +327,25 @@ dataHist <- function(input, output, session, inDataMod) {
                     center = TRUE,  
                     scale = TRUE)
     }
+    
     # take log10 of data
     if (input$selRescale == "log10x") {
       if (sum(locDM <= 0, na.rm = T) > 0) {
         # Transform data points smaller or equal to zero into NAs
         locDM[locDM <= 0] <- NA
         
-        createAlert(session, "alertAnchorNegPresent", "alertNegPresent", title = "Warning",
-                    content = helpText.server[["alertNegPresent"]], 
+        createAlert(session, "alertAnchorNegPresent", "alertNegPresent0", title = "Warning",
+                    content = helpText.dataHist[["alertNegPresent0"]], 
                     append = FALSE,
                     style = "warning")
         
       } else {
-        closeAlert(session, "alertNegPresent")
+        closeAlert(session, "alertNegPresent0")
       }
       
       locDM = log10(locDM)
     } else {
-      closeAlert(session, "alertNegPresent")
+      closeAlert(session, "alertNegPresent0")
     }
     
     # take log10(1+x) of data
@@ -342,7 +355,7 @@ dataHist <- function(input, output, session, inDataMod) {
         locDM[locDM <= -1] <- NA
         
         createAlert(session, "alertAnchorNegPresent", "alertNegPresent1", title = "Warning",
-                    content = helpText.server[["alertNegPresent1"]], 
+                    content = helpText.dataHist[["alertNegPresent1"]], 
                     append = FALSE,
                     style = "warning")
         
@@ -354,7 +367,7 @@ dataHist <- function(input, output, session, inDataMod) {
     } else {
       closeAlert(session, "alertNegPresent1")
     }
-
+    
     # winsorize
     if (input$selRescale == "win")
       locDM = myWinsor2(locDM)
@@ -366,7 +379,7 @@ dataHist <- function(input, output, session, inDataMod) {
     return(locDM)
   })
   
-  # apply data filters from UI (clipping, trimming, rescaling)
+  # apply data filters from UI (clipping, trimming)
   # return it to other modules
   dmReturn = reactive({ 
     cat(file = stdout(), 'tabHist:dmReturn\n')
@@ -379,24 +392,17 @@ dataHist <- function(input, output, session, inDataMod) {
     
     # Data trimming
     # Data points outside of the range are set to NA.
-    # This isn't affected by conversion to 0's above.
     if (input$chBdataTrim) {
-      locDM[locDM < as.numeric(input$inDataTrimMin) & locDM != 0] <- NA
-      
-      # data points above a threshold are set to NA
-      # this isn't affected by conversion to 0's above
-      locDM[locDM > as.numeric(input$inDataTrimMax)] <- NA
+      locDM[locDM < as.numeric(input$inDataTrimMin)] = NA
+      locDM[locDM > as.numeric(input$inDataTrimMax)] = NA
     }
     
     
     # Data clipping
     # Data points outside of the range are set to range limits.
     if (input$chBdataClip) {
-      locDM[locDM < as.numeric(input$inDataClipMin) &
-              locDM != 0] <- input$inDataClipMin
-      
-      locDM[locDM > as.numeric(input$inDataClipMax)] <-
-        input$inDataClipMax
+      locDM[locDM < as.numeric(input$inDataClipMin)] = input$inDataClipMin
+      locDM[locDM > as.numeric(input$inDataClipMax)] = input$inDataClipMax
     }
     
     return(locDM)
@@ -404,7 +410,9 @@ dataHist <- function(input, output, session, inDataMod) {
   
   # Histogram ----
   
+  # Read the number of bins from the slider with a delay
   giveMeNbins = reactive({
+    cat(file = stdout(), 'tabHist:giveMeNbins\n')
     
     locNbins = input$slHistBinN
     
@@ -414,30 +422,31 @@ dataHist <- function(input, output, session, inDataMod) {
   output$plotHist <- renderPlot({
     cat(file = stdout(), 'tabHist:plotHist\n')
     
-    loc.dm = rescaledData()
+    locDM = rescaledData()
     
     validate(
-      need(!is.null(loc.dm), "Nothing to plot. Load data first!")
+      need(!is.null(locDM), "Nothing to plot. Load data first!")
     )
     
-    if (is.null(loc.dm))
+    if (is.null(locDM))
       return(NULL)
     
     # generate bins based on input$bins from ui.R
-    locVecBins = seq(min(loc.dm, na.rm = T), 
-                     max(loc.dm, na.rm = T), 
+    locVecBins = seq(min(locDM, na.rm = T), 
+                     max(locDM, na.rm = T), 
                      length.out = giveMeNbins() + 1)
     
     # Draw a histogram with vertical lines corresponding to:
     # trimming - red dashed
     # clipping - blue dotted
-    hist(loc.dm, 
+    hist(locDM, 
          breaks = locVecBins, 
-         freq = TRUE,
+         freq = FALSE,
          main = 'Histogram of data',
          xlab = 'Values',
          col = 'darkgray', 
          border = 'white')
+    
     abline(v = input$inDataTrimMin,
            col = 2,
            lty = 2)

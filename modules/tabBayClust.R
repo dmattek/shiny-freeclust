@@ -7,10 +7,10 @@
 # in ui.R
 # tabPanel(
 #  'Hierarchical',
-#  clustBayUI('TabClustBay'))
+#  clustBayUI('tabBay'))
 #
 # in server.R
-# callModule(clustBay, 'TabClustBay', dataMod)
+# callModule(clustBay, 'tabBay', dataMod)
 # where dataMod is the output from a reactive function 
 # that returns a dataset in wide format ready for clustering
 
@@ -23,18 +23,19 @@ require(bclust) # Bayesian clustering
 require(shinyBS) # for tooltips
 require(shinycssloaders) # for loader animations
 
-helpText.clBayes = c(alImportance = paste0("<p>Bayes weight (BW) calculated during clustering ",
-                                              "reflect the importance of data points in the clustering. ",
-                                              "The following labels are used to indicate the importance:",
-                                              "<li>Black - data point not taken into account</li>",
-                                              "<li>* - low, WF∈(0, 0.1]</li>",
-                                              "<li>** - medium, WF∈(0.1, 0.5]</li>",
-                                              "<li>*** - high, WF∈(0.5, 1.0]</li>",
-                                              "</p><p>Nia and Davison (2012): ",
-                                              "<i>High-Dimensional Bayesian Clustering with Variable Selection: The R Package bclust</i>; ",
-                                              "Journal of Statistical Software 47(5).</p>"),
-                     downClAss = "Download a CSV with cluster assignments to time series ID",
-                     downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.")
+helpText.clBay = c(alImportance = paste0("<p>Bayes weight (BW) calculated during clustering ",
+                                         "reflect the importance of data points in the clustering. ",
+                                         "The following labels are used to indicate the importance:",
+                                         "<li>Black - data point not taken into account</li>",
+                                         "<li>* - low, WF∈(0, 0.1]</li>",
+                                         "<li>** - medium, WF∈(0.1, 0.5]</li>",
+                                         "<li>*** - high, WF∈(0.5, 1.0]</li>",
+                                         "</p><p>Nia and Davison (2012): ",
+                                         "<i>High-Dimensional Bayesian Clustering with Variable Selection: The R Package bclust</i>; ",
+                                         "Journal of Statistical Software 47(5).</p>"),
+                   downClAss = "Download a CSV with cluster assignments to time series ID",
+                   downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.",
+                   alertNAsPresentClBay = "NAs (still) present in the dataset. bclust cannot continue.")
 
 # UI ----
 clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
@@ -54,32 +55,13 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
     
     br(),
     fluidRow(
-      column(3,
-             checkboxInput(ns('selectPlotBayDend'),
-                           'Plot dendrogram and re-order samples', TRUE),
+      column(4,
              uiOutput(ns('slNclustSlider'))
       ),
-      column(3,
-             selectInput(
-               ns("selectPlotBayPalette"),
-               label = "Heatmap\'s colour palette:",
-               choices = l.col.pal,
-               selected = 'Spectral'
-             ),
-             selectInput(
-               ns("selectPlotBayPaletteDend"),
-               label = "Dendrogram\'s colour palette",
-               choices = l.col.pal.dend,
-               selected = 'Color Blind'
-             ),
-             checkboxInput(ns('inPlotBayRevPalette'), 'Reverse colour palette', TRUE),
-             checkboxInput(ns('selectPlotBayKey'), 'Plot colour key', TRUE)
-      ),
-      column(3,
-             checkboxInput(ns('inDispGrid'), 
-                           'Display grid lines', 
-                           FALSE),
-             uiOutput(ns('inGridColorUI'))
+      column(
+        3,
+        bsAlert("alertAnchorClBayNAsPresent"),
+        
       )
     ),
     
@@ -90,68 +72,97 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
       condition = "input.chBplotStyle",
       ns = ns,
       
-    fluidRow(
-      column(
-        2,
-        numericInput(
-          ns('inPlotBayHmMarginX'),
-          'Bottom margin',
-          10,
-          min = 1,
-          width = 100
+      fluidRow(
+        column(
+          4, 
+          checkboxInput(ns('chBdispGrid'), 
+                        'Display grid lines', 
+                        FALSE),
+          conditionalPanel(
+            condition = "input.chBdispGrid",
+            ns = ns,
+            
+            sliderInput(
+              ns('slGridColor'),
+              'Shade of grey for grid lines',
+              min = 0,
+              max = 1,
+              value = 0.6,
+              step = .1,
+              ticks = TRUE)
+          )
+        ),
+        
+        column(
+          3,
+          
+          selectInput(
+            ns("selectPalette"),
+            label = "Heatmap\'s colour palette:",
+            choices = l.col.pal,
+            selected = 'Spectral'
+          ),
+          checkboxInput(ns('inPlotBayRevPalette'), 'Reverse colour palette', TRUE),
+        ),
+        
+        column(
+          3,
+          selectInput(
+            ns("selectPaletteDend"),
+            label = "Dendrogram\'s colour palette",
+            choices = l.col.pal.dend,
+            selected = 'Color Blind'
+          ),
+          checkboxInput(ns('selectPlotBayDend'), 'Plot dendrogram and re-order samples', TRUE)
+          
         )
       ),
-      column(
-        2,
-        numericInput(
-          ns('inPlotBayHmMarginY'),
-          'Right margin',
-          10,
-          min = 1,
-          width = 100
+      
+      fluidRow(
+        
+        column(
+          2,
+          numericInput(
+            ns('inPlotBayHmFontX'),
+            'Font size row labels',
+            1,
+            min = 0,
+            width = 100,
+            step = 0.1
+          )
+        ),
+        column(
+          2,
+          numericInput(
+            ns('inPlotBayHmFontY'),
+            'Font size column labels',
+            1,
+            min = 0,
+            width = 100,
+            step = 0.1
+          )
+        ),
+        column(3,
+               numericInput(
+                 ns('inPlotHeight'),
+                 'Display plot height',
+                 value = 800,
+                 min = 100,
+                 step = 100
+               )
+        ),
+        column(3,
+               numericInput(
+                 ns('inPlotWidth'),
+                 'Display plot width',
+                 value = 800,
+                 min = 100,
+                 step = 100
+               )
         )
-      ),
-      column(
-        2,
-        numericInput(
-          ns('inPlotBayHmFontX'),
-          'Font size row labels',
-          1,
-          min = 0,
-          width = 100,
-          step = 0.1
-        )
-      ),
-      column(
-        2,
-        numericInput(
-          ns('inPlotBayHmFontY'),
-          'Font size column labels',
-          1,
-          min = 0,
-          width = 100,
-          step = 0.1
-        )
-      ),
-      column(2,
-             numericInput(
-               ns('inPlotHeight'),
-               'Display plot height',
-               value = 1000,
-               min = 100,
-               step = 100
-             ),
-             numericInput(
-               ns('inPlotWidth'),
-               'Display plot width',
-               value = 800,
-               min = 100,
-               step = 100
-             )
       )
-    )
     ),
-
+    
     checkboxInput(ns('chBdownload'),
                   'Download plot or data',
                   FALSE),
@@ -160,32 +171,30 @@ clustBayUI <- function(id, label = "Sparse Hierarchical CLustering") {
       ns = ns,
       
       fluidRow(
-        column(4,
-               
+        column(3,
                downloadButton(ns('downClAssBay'), 'Cluster assignments'),
                bsTooltip(ns("downClAssBay"),
-                         helpText.clBayes[["downClAss"]],
+                         helpText.clBay[["downClAss"]],
+                         placement = "top",
+                         trigger = "hover",
+                         options = NULL),
+        ),
+        
+        column(3,
+               downloadButton(ns('downDendBay'), 'Dendrogram object'),
+               bsTooltip(ns("downDendBay"),
+                         helpText.clBay[["downDend"]],
                          placement = "top",
                          trigger = "hover",
                          options = NULL)
         ),
-        
-        column(4,
-               
-               downloadButton(ns('downDendBay'), 'Dendrogram object'),
-               bsTooltip(ns("downDendBay"),
-                         helpText.clBayes[["downDend"]],
-                         placement = "top",
-                         trigger = "hover",
-                         options = NULL))
       ),
       downPlotUI(ns('downPlotBayHM'), "")
     ),
     
-    
     checkboxInput(ns('inPlotBayInteractive'), 'Interactive Plot',  value = FALSE),
     uiOutput(ns("plotUI"))
-  
+    
   )
 }
 
@@ -200,58 +209,87 @@ clustBay <- function(input, output, session, dataMod) {
     return(input$slNclust)
   }) %>% debounce(MILLIS)
   
+  # Perform Bayesian clustering
   calcBclust <- reactive({
-    cat(file = stdout(), 'calcBclust \n')
+    cat(file = stdout(), 'tabBay:calcBclust\n')
     
     locDM = dataMod()
+    
     if (is.null(locDM))
       return(NULL)
     
-    bclust(locDM, transformed.par = c(0, -50, log(16), 0, 0, 0))
+    # Throw some warnings if NAs present in the dataset.
+    # DTW cannot compute distance when NA's are preset.
+    # Other distance measures can be calculated but caution is required with interpretation.
+    # NAs in the wide format can result from explicit NAs in the measurment column or
+    # from missing rows that cause NAs to appear when convertinf from long to wide (dcast)
+    if(sum(is.na(locDM)) > 0) {
+      createAlert(session, "alertAnchorClBayNAsPresent", "alertNAsPresentClBay", title = "Error",
+                  content = helpText.clBay[["alertNAsPresentClBay"]], 
+                  append = FALSE,
+                  style = "danger")
+      
+      return(NULL)
+      
+    } else {
+      closeAlert(session, 'alertNAsPresentClBay')
+    }
+    
+    locClBay = bclust::bclust(locDM, 
+                              transformed.par = c(0, -50, log(16), 0, 0, 0))
+    
+    return(locClBay)
   })
   
+  # Calculate dendrogram
   calcDend <- reactive({
-    cat(file = stdout(), 'calcDend \n')
+    cat(file = stdout(), 'tabBay:calcDend\n')
     
-    d.bclus = calcBclust()
-    if (is.null(d.bclus))
+    locBclust = calcBclust()
+    if (is.null(locBclust))
       return(NULL)
     
     # number of clusters at which dendrogram is cut
-    loc.k = returnNclust()
-    
-    # make a palette with the amount of colours equal to the number of clusters
-    loc.col = ggthemes::tableau_color_pal(input$selectPlotBayPaletteDend)(n = loc.k)
-    
-    dend <- as.dendrogram(d.bclus)
-    dend <- color_branches(dend, 
-                           col = loc.col,
-                           k = loc.k)
-    
-    return(dend)
-
-  })
-  
-  userVarImpBclus <- reactive({
-    cat(file = stdout(), 'userVarImpBclus \n')
-    
-    d.bclus = calcBclust()
-    if (is.null(d.bclus))
+    locNclust = returnNclust()
+    if (is.null(locNclust))
       return(NULL)
     
-    return(imp(d.bclus)$var)
+    # make a palette with the amount of colours equal to the number of clusters
+    locCol = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = locNclust)
+    
+    locDend <- as.dendrogram(locBclust)
+    locDend <- color_branches(locDend, 
+                              col = locCol,
+                              k = locNclust)
+    
+    return(locDend)
+    
+  })
+  
+  calcVarImpBclust <- reactive({
+    cat(file = stdout(), 'tabBay:calcVarImpBclust\n')
+    
+    locBclust = calcBclust()
+    if (is.null(locBclust))
+      return(NULL)
+    
+    locImp = bclust::imp(locBclust)
+    if (is.null(locImp))
+      return(NULL)
+    
+    return(locImp[["var"]])
   })
   
   
   output$slNclustSlider = renderUI({
     ns <- session$ns
-
+    
     locDM = dataMod()
     if (is.null(locDM))
       return(NULL)
     
-    loc.d.bclus = calcBclust()
-    if (is.null(loc.d.bclus))
+    locBclust = calcBclust()
+    if (is.null(locBclust))
       return(NULL)
     
     sliderInput(
@@ -259,7 +297,7 @@ clustBay <- function(input, output, session, dataMod) {
       'Number of dendrogram branches to cut (default: optimal from bclust)',
       min = 1,
       max = round(nrow(locDM) * 0.3),
-      value = loc.d.bclus$optim.clustno,
+      value = locBclust[["optim.clustno"]],
       step = 1,
       ticks = TRUE,
       round = TRUE
@@ -301,181 +339,166 @@ clustBay <- function(input, output, session, dataMod) {
     return('clust_bayes.png')
   })
   
+  # Download the plot as a PNG
   callModule(downPlot, "downPlotBayHM", createFnameHeatMap, plotBayHm)
-    
+  
+  # Plot heatmap
   plotBayHm <- function() {
-    cat(file = stdout(), 'plotBayHm \n')
+    cat(file = stdout(), 'tabBay:plotBayHm\n')
     
     locDM = dataMod()
-    loc.dend <- calcDend()
-    loc.var.imp = imp(calcBclust())$var
-    
+    locDend = calcDend()
+    locVarImp = calcVarImpBclust()
+
     validate(
       need(!is.null(locDM), "Nothing to plot. Load data first!"),
-      need(!is.null(loc.var.imp), "Did not cluster"),
-      need(!is.null(loc.dend), "Did not create dendrogram")
+      need(!is.null(locDend), "Did not create dendrogram"),
+      need(!is.null(locVarImp), "Did not calculate variable importance")
     )
+
+    # Prepare color labels for row-side annotations
+    col_labels <- get_leaves_branches_col(locDend)
+    col_labels <- col_labels[order(order.dendrogram(locDend))]
     
-    col_labels <- get_leaves_branches_col(loc.dend)
-    col_labels <- col_labels[order(order.dendrogram(loc.dend))]
-    
+    # Prepare color palette for the heatmap
     if (input$inPlotBayRevPalette)
-      my_palette <-
-      rev(colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99))
+      locMyPal <-
+      rev(colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99))
     else
-      my_palette <-
-      colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99)
+      locMyPal <-
+      colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99)
     
+    # number of clusters at which dendrogram is cut
+    
+    # yes/no for plotting dendrogram on the left hand side of the heatmap
     if (input$selectPlotBayDend) {
-      assign("var.tmp.1", loc.dend)
-      var.tmp.2 = "row"
+      assign("locVarTmp1", locDend)
+      locVarTmp2 = "row"
     } else {
-      assign("var.tmp.1", FALSE)
-      var.tmp.2 = "none"
+      assign("locVarTmp1", FALSE)
+      locVarTmp2 = "none"
     }
     
-    loc.colnames = paste0(ifelse(loc.var.imp < 0, "- ",
-                                 ifelse(
-                                   loc.var.imp < quantile(loc.var.imp, 0.25), "",
-                                   ifelse(loc.var.imp < quantile(loc.var.imp, 0.5), "* ", 
-                                          ifelse(loc.var.imp < quantile(loc.var.imp, 0.75), "** ", "*** "))
-                                 )), colnames(locDM))
-    
-    loc.colcol   = ifelse(loc.var.imp < 0, "blue",
-                          ifelse(
-                            loc.var.imp < quantile(loc.var.imp, 0.25), "black",
-                            ifelse(loc.var.imp < quantile(loc.var.imp, 0.5), "green", 
-                                   ifelse(loc.var.imp < quantile(loc.var.imp, 0.75), "orange", "red"))
-                          ))
+    # Prepare column labels for the heatmap
+    # They're coloured and prefixed with variable importance
+    locColumnNames = paste0(ifelse(locVarImp < 0, "- ",
+                                   ifelse(
+                                     locVarImp < quantile(locVarImp, 0.25), "",
+                                     ifelse(locVarImp < quantile(locVarImp, 0.5), "* ", 
+                                            ifelse(locVarImp < quantile(locVarImp, 0.75), "** ", "*** "))
+                                   )), colnames(locDM))
     
     
     heatmap.2(
       locDM,
       Colv = "NA",
-      Rowv = var.tmp.1,
-      srtCol = 90,
-      dendrogram = var.tmp.2,
+      Rowv = locVarTmp1,
+      srtCol = 45,
+      dendrogram = locVarTmp2,
       trace = "none",
-      key = input$selectPlotBayKey,
-      margins = c(input$inPlotBayHmMarginX, input$inPlotBayHmMarginY),
-      col = my_palette,
-      na.col = grey(input$inPlotBayHmNAcolor),
+      margins = c(10,10),
+      key = T,
+      col = locMyPal,
       denscol = "black",
       density.info = "density",
       RowSideColors = col_labels,
       colRow = col_labels,
-      colCol = loc.colcol,
-      labCol = loc.colnames,
-      sepcolor = if (input$inDispGrid) grey(input$inPlotBayHmGridColor) else NULL,
-      colsep = if (input$inDispGrid) 1:ncol(locDM) else NULL,
-      rowsep = if (input$inDispGrid) 1:nrow(locDM) else NULL,
+      labCol = locColumnNames,
+      sepcolor = if (input$chBdispGrid) grey(input$slGridColor) else NULL,
+      colsep = if (input$chBdispGrid) 1:ncol(locDM) else NULL,
+      rowsep = if (input$chBdispGrid) 1:nrow(locDM) else NULL,
       cexRow = input$inPlotBayHmFontX,
       cexCol = input$inPlotBayHmFontY,
       main = "Bayesian Clustering (bclust)"
-    )
-  }
-  
-  output$inGridColorUI <- renderUI({
-    ns <- session$ns
-    
-    if(input$inDispGrid) {
-      sliderInput(
-        ns('inPlotBayHmGridColor'),
-        'Shade of grey for grid lines',
-        min = 0,
-        max = 1,
-        value = 0.6,
-        step = .1,
-        ticks = TRUE)
-    }
-  })
+    )    
+}
   
   
   plotBayImp <- function() {
-    cat(file = stdout(), 'plotBayImp \n')
+    cat(file = stdout(), 'tabBay:plotBayImp\n')
     
     locDM = dataMod()
     if (is.null(locDM))
       return(NULL)
     
-    loc.d.bclus = calcBclust()
-    if (is.null(loc.d.bclus))
+    locBclust = calcBclust()
+    if (is.null(locBclust))
       return(NULL)
     
-    #cat(imp(loc.d.bclus)$var)
+    #cat(imp(locBclust)$var)
     
     viplot(
-      imp(loc.d.bclus)$var,
+      imp(locBclust)$var,
       xlab = colnames(locDM),
       xlab.srt = 90,
-      xlab.mar = input$inPlotBayHmMarginX,
       xlab.cex = input$inPlotBayHmFontY,
       main = '\nVariable importance\n'
     )
   }
   
-
+  
   
   output$outPlotBayHm <- renderPlot({
     plotBayHm()
   })
   
   output$plotBayInt <- renderD3heatmap({
-    cat(file = stdout(), 'plotBayInt \n')
+    cat(file = stdout(), 'tabBay:plotBayInt\n')
     
     locDM = dataMod()
-    if (is.null(locDM))
-      return(NULL)
+    locDend <- calcDend()
+    locVarImp = calcVarImpBclust()
     
-    loc.dend = calcDend()
-    if (is.null(loc.dend))
-      return(NULL)
+    validate(
+      need(!is.null(locDM), "Nothing to plot. Load data first!"),
+      need(!is.null(locDend), "Did not create dendrogram"),
+      need(!is.null(locVarImp), "Did not calculate variable importance")
+    )
     
-    loc.var.imp = imp(calcBclust())$var
-    if (is.null(loc.var.imp))
-      return(NULL)
-    
-    col_labels <- get_leaves_branches_col(loc.dend)
-    col_labels <- col_labels[order(order.dendrogram(loc.dend))]
-    
+    # Prepare color palette for the heatmap
     if (input$inPlotBayRevPalette)
-      my_palette <-
-      rev(colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99))
+      locMyPal = rev(
+        colorRampPalette(
+          brewer.pal(9, 
+                     input$selectPalette))(n = 99))
     else
-      my_palette <-
-      colorRampPalette(brewer.pal(9, input$selectPlotBayPalette))(n = 99)
+      locMyPal = colorRampPalette(
+        brewer.pal(9, 
+                   input$selectPalette))(n = 99)
     
+    # yes/no for plotting dendrogram on the left hand side of the heatmap
     if (input$selectPlotBayDend) {
-      assign("var.tmp.1", loc.dend)
-      var.tmp.2 = "row"
+      assign("locVarTmp1", locDend)
+      locVarTmp2 = "row"
     } else {
-      assign("var.tmp.1", FALSE)
-      var.tmp.2 = "none"
+      assign("locVarTmp1", FALSE)
+      locVarTmp2 = "none"
     }
     
-    loc.colnames = paste0(ifelse(loc.var.imp < 0, "- ",
-                                 ifelse(
-                                   loc.var.imp < quantile(loc.var.imp, 0.25), "",
-                                   ifelse(loc.var.imp < quantile(loc.var.imp, 0.5), "* ", 
-                                          ifelse(loc.var.imp < quantile(loc.var.imp, 0.75), "** ", "*** "))
-                                 )), colnames(locDM))
+    # Prepare column labels for the heatmap
+    # They're coloured and prefixed with variable importance
+    locColumnNames = paste0(ifelse(locVarImp < 0, "- ",
+                                   ifelse(
+                                     locVarImp < quantile(locVarImp, 0.25), "",
+                                     ifelse(locVarImp < quantile(locVarImp, 0.5), "* ", 
+                                            ifelse(locVarImp < quantile(locVarImp, 0.75), "** ", "*** "))
+                                   )), colnames(locDM))
     
     d3heatmap(
       locDM,
-      Rowv = var.tmp.1,
-      dendrogram = var.tmp.2,
+      Rowv = locVarTmp1,
+      dendrogram = locVarTmp2,
       trace = "none",
       revC = FALSE,
-      margins = c(input$inPlotBayHmMarginX, input$inPlotBayHmMarginY),
-      colors = my_palette,
-      na.col = grey(input$inPlotBayNAcolor),
-      cexRow = input$inPlotBayHmFontY,
-      cexCol = input$inPlotBayHmFontX,
-      xaxis_height = input$inPlotBayHmMarginX,
-      yaxis_width = input$inPlotBayHmMarginY,
+      margins = c(10,10),
+      colors = locMyPal,
+      cexRow = input$inPlotBayHmFontY * 10,
+      cexCol = input$inPlotBayHmFontX * 10,
       show_grid = TRUE,
+      xaxis_height = 10,
+      yaxis_width = 10,
       labRow = rownames(locDM),
-      labCol = loc.colnames
+      labCol = locColumnNames
     )
   })
   
@@ -483,9 +506,9 @@ clustBay <- function(input, output, session, dataMod) {
     ns <- session$ns
     
     if (input$inPlotBayInteractive)
-      withSpinner(d3heatmapOutput(ns("plotBayInt"), 
-                                  height = paste0(input$inPlotHeight, "px"), 
-                                  width = paste0(input$inPlotWidth, "px")))
+      d3heatmapOutput(ns("plotBayInt"), 
+                      height = paste0(input$inPlotHeight, "px"), 
+                      width = paste0(input$inPlotWidth, "px"))
     else {
       withSpinner(plotOutput(ns('outPlotBayHm'), 
                              height = paste0(input$inPlotHeight, "px"), 
@@ -496,6 +519,6 @@ clustBay <- function(input, output, session, dataMod) {
   addPopover(session, 
              ns("alImportance"),
              title = "Variable importance",
-             content = helpText.clBayes[["alImportance"]],
+             content = helpText.clBay[["alImportance"]],
              trigger = "click")
-  }
+}

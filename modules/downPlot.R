@@ -32,7 +32,7 @@ downPlotUI <- function(id, label = "Download Plot") {
                    "#inline label{ display: table-cell; text-align: center; vertical-align: middle; } #inline .form-group { display: table-row;}")
       ),
       
-      column(2,
+      column(3,
              uiOutput(ns('uiDownButton'))
       ),
       

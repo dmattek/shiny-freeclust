@@ -152,9 +152,6 @@ shinyServer(function(input, output, session) {
   callModule(clustHierSpar, 'TabClustHierSpar', dataModProc)
   
   ##### Bayesian clustering
-  # The package is not available on CRAN anymore,
-  # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
-  # then uncomment here, in ui.R and in global.R
   callModule(clustBay, 'TabClustBay', dataModProc)
   
   ##### Hierarchical validation

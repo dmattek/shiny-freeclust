@@ -44,9 +44,7 @@ helpText.server = c(
   alDataFormat =  paste0(
     "<p>Accepts a CSV text file in wide format. ",
     "First row should contain sample names; first column should contain feature/measurement names. ",
-    "Or vice versa. Rows/columns can be flipped in the UI.</p>"),
-  alertNegPresent  = "Data points smaller than or equal to zero are present. Before applying log10(x), such data points will be transformed to NAs.",
-  alertNegPresent1 = "Data points smaller than or equal to -1 are present. Before applying log10(x+1), such data points will be transformed to NAs."
+    "Or vice versa. Rows/columns can be flipped in the UI.</p>")
 )
 
 # list of palettes for the heatmap
