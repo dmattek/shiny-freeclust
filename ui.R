@@ -97,10 +97,10 @@ shinyUI(fluidPage(
           clustHierSparUI('TabClustHierSpar')
         ),
         
-        tabPanel(
-          'Bayesian',
-          clustBayUI('TabClustBay')
-        ),
+        # tabPanel(
+        #   'Bayesian',
+        #   clustBayUI('TabClustBay')
+        # ),
         
         # cluster validation
         tabPanel(

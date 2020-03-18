@@ -1,4 +1,6 @@
-#
+# NOT USED AT THE MOMENT
+# The package bclust is not available from CRAN anymore; install manually to use this module
+
 # Free-Clust: Shiny app for clustering data
 # Author: Maciej Dobrzynski
 #

@@ -152,7 +152,7 @@ shinyServer(function(input, output, session) {
   callModule(clustHierSpar, 'TabClustHierSpar', dataModProc)
   
   ##### Bayesian clustering
-  callModule(clustBay, 'TabClustBay', dataModProc)
+  #callModule(clustBay, 'TabClustBay', dataModProc)
   
   ##### Hierarchical validation
   callModule(clustValid, 'TabClValid', dataModProc)

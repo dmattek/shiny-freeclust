@@ -10,6 +10,8 @@ required_packages = c(
   "ggplot2", 
   "gplots", 
   "d3heatmap",
+  "pheatmap",
+  "heatmaply",
   "dendextend", 
   "RColorBrewer", 
   "ggthemes",
@@ -30,15 +32,15 @@ if (length(missing_packages)) {
 
 # The package is not available on CRAN anymore,
 # install from the archive https://cran.r-project.org/src/contrib/Archive/bclust/
-if (!("bclust" %in% installed.packages())) {
-  packageurl <- "https://cran.r-project.org/src/contrib/Archive/bclust/bclust_1.5.tar.gz"
-  install.packages(packageurl, repos=NULL, type="source")
-}
+# if (!("bclust" %in% installed.packages())) {
+#   packageurl <- "https://cran.r-project.org/src/contrib/Archive/bclust/bclust_1.5.tar.gz"
+#   install.packages(packageurl, repos=NULL, type="source")
+# }
 
 source('modules/auxfn.R')
 source('modules/downPlot.R')
 source('modules/tabHist.R')
 source('modules/tabHier.R')
 source('modules/tabHierSparse.R')
-source('modules/tabBayClust.R')
+#source('modules/tabBayClust.R')
 source('modules/tabClValid.R')
