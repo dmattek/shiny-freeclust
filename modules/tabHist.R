@@ -63,7 +63,7 @@ dataHistUI <- function(id, label = "Histogram") {
                step = 1
              )
       ),
-      
+
       column(3,
              # rescale data
              selectInput(
@@ -91,6 +91,14 @@ dataHistUI <- function(id, label = "Histogram") {
              bsAlert("alertAnchorNegPresent")
       ),
       
+      
+      column(3, 
+             # Show data min/max
+             tags$b("Summary"),
+             textOutput(ns('dataMin')),
+             textOutput(ns('dataMax')),
+             textOutput(ns('dataNA'))
+      ),
     ),
     
     plotOutput(ns('plotHist'), 
@@ -98,6 +106,7 @@ dataHistUI <- function(id, label = "Histogram") {
     tags$hr(),
     
     fluidRow(
+      
       column(3,
              # trim data
              checkboxInput(ns('chBdataTrim'), '[3] Trim data'),
@@ -157,14 +166,7 @@ dataHistUI <- function(id, label = "Histogram") {
                actionButton(ns('butDataClipReset'), 
                             'Reset clipping')
              )
-      ),
-      column(3, 
-             # Show data min/max
-             tags$b("Extreme data points"),
-             textOutput(ns('dataMin')),
-             textOutput(ns('dataMax')),
       )
-      
     )
     
   )
@@ -211,7 +213,19 @@ dataHist <- function(input, output, session, inDataMod) {
              ))
     }
   })
+
+  output$dataNA <- renderText({
+    cat(file = stdout(), 'tabHist:dataNA\n')
+    
+    locX = calcDataNA()
+    
+    if (!is.null(locX)) {
+      paste0('#NA = ',
+             prettyNum(locX))
+    }
+  })
   
+    
   # Set min/max numeric inputs for trimming and clipping to 
   # min/max values in the data
   observe({
@@ -306,6 +320,19 @@ dataHist <- function(input, output, session, inDataMod) {
     
     if (!is.null(locDM)) {
       locX = myMax(locDM, sig = SIGNIFDIGITSROUND, na.rm = T)
+    } else {
+      return(NULL)
+    }
+  })
+  
+  
+  calcDataNA = reactive({
+    cat(file = stdout(), 'tabHist:calcDataNA\n')
+    
+    locDM = rescaledData()
+    
+    if (!is.null(locDM)) {
+      locX = sum(is.na(locDM))
     } else {
       return(NULL)
     }
