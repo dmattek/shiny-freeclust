@@ -6,7 +6,7 @@
 #
 
 library(shiny)
-library(shinyjs) #http://deanattali.com/shinyjs/
+#library(shinyjs) #http://deanattali.com/shinyjs/
 library(shinyBS) # for tooltips
 library(shinycssloaders) # for loader animations
 
@@ -20,7 +20,7 @@ options(spinner.color="#00A8AA")
 ## SERVER ----
 
 shinyServer(function(input, output, session) {
-  useShinyjs()
+  #useShinyjs()
   
   # This is only set at session start
   # we use this as a way to determine which input was
@@ -32,9 +32,9 @@ shinyServer(function(input, output, session) {
   )
   
   # This button will reset the inFileDataLoad
-  observeEvent(input$butReset, {
-    reset("fileDataLoad")  # reset is a shinyjs function
-  })
+  # observeEvent(input$butReset, {
+  #   shinyjs::reset("fileDataLoad")  # reset is a shinyjs function
+  # })
   
   # generate random dataset 1
   dataGen1 <- eventReactive(input$butDataGen1, {

@@ -16,7 +16,6 @@
 
 
 require(pheatmap)
-require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(heatmaply) # interactive heatmap
 require(sparcl) # sparse hierarchical and k-means
@@ -25,9 +24,9 @@ require(shinycssloaders) # for loader animations
 
 
 helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated during clustering ",
-                                              "reflect the importance of data points in the clustering. ",
-                                              "The following labels are used to indicate the importance:",
-                                              "<li>Black - time point not taken into account</li>",
+                                              "reflect the importance of features/measurements for clustering. ",
+                                              "The following label prefixes indicate the importance:",
+                                              "<li>no prefix - feature not taken into account</li>",
                                               "<li><p>* - low, WF∈(0, 0.1]</p></li>",
                                               "<li><p>** - medium, WF∈(0.1, 0.5]</p></li>",
                                               "<li><p>*** - high, WF∈(0.5, 1.0]</p></li>",
@@ -62,7 +61,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
           ns('slNclust'),
           'Number of dendrogram branches to cut',
           min = 1,
-          max = 10,
+          max = MAXNCLUST,
           value = 1,
           step = 1,
           ticks = TRUE,
@@ -312,19 +311,9 @@ clustHierSpar <- function(input, output, session, dataMod) {
     loc.hc = calcHierSpar()
     if (is.null(loc.hc))
       return(NULL)
-    
-    # number of clusters at which dendrogram is cut
-    loc.k = returnNclust()
-    
-    # make a palette with the amount of colours equal to the number of clusters
-    loc.col = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = loc.k)
-    
-    
+
     dend <- as.dendrogram(loc.hc[["hc"]])
-    dend <- color_branches(dend, 
-                           col = loc.col,
-                           k = loc.k)
-    
+
     return(dend)
   })
   
@@ -512,12 +501,6 @@ clustHierSpar <- function(input, output, session, dataMod) {
       dendextend::cutree(tree = locDend, 
                          k = locNclust))
     names(locRowAnnotation) = "cluster"
-    
-    # Uncomment to have dendrogram branches coloured the same as side annotations.
-    # The static plot has a regular black dendrogram, thus commented here for consistency.
-    # locDend <- dendextend::color_branches(locDend, 
-    #                                       col = locColorDend,
-    #                                       k = locNclust)
     
     # prepend column names with weights from sparcl
     locColNames = paste0(ifelse(locHC$ws == 0, "",

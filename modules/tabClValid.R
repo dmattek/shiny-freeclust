@@ -38,9 +38,9 @@ helpText.clValid = c(alertClValidNAsPresent = paste0("NAs present. The selected 
                      alLearnMoreInt = paste0("<p>Evaluate the goodness of a clustering structure by inspecting ",
                                              "principal components, the dendrogram, ",
                                              "and the silhouette for a given number of clusters.</p>",
-                                             "<p><b>Principal components:</b> Each point in the scatter plot corresponds to a single sample in the first 2 PCs space. ",
+                                             "<p><b>Principal components:</b> Each point in the scatter plot corresponds to a single sample. ",
                                              "Points are coloured by cluster numbers. Compact, well separated clusters ",
-                                             "indicate good partitioning. The percentage of total variance carried by each PC is indicated.</p>",
+                                             "indicate good partitioning. Percentages indicate the total variance carried by each component.</p>",
                                              "<p><b>Dendrogram:</b> The height of branches indicates how well clusters are separated.</p>",
                                              "<p><b>Silhouette plot:</b> The plot indicates for each series whether it is on average closer to series within its cluster ",
                                              "or to series in other clusters. Each bar represents the <a href=https://en.wikipedia.org/wiki/Silhouette_(clustering) title=\"External link\">silhouette score</a> ",
@@ -115,7 +115,7 @@ clustValidUI <- function(id, label = "Validation") {
                           ns('slClValidMaxClust'),
                           'Maximum number of clusters to consider',
                           min = 2,
-                          max = 20,
+                          max = MAXNCLUST,
                           value = 10,
                           step = 1,
                           ticks = TRUE,
@@ -144,7 +144,7 @@ clustValidUI <- function(id, label = "Validation") {
                           ns('slClValidNclust'),
                           'Number of clusters to evaluate',
                           min = 2,
-                          max = 20,
+                          max = MAXNCLUST,
                           value = 1,
                           step = 1,
                           ticks = TRUE,
@@ -153,11 +153,11 @@ clustValidUI <- function(id, label = "Validation") {
                  )
                ),
                br(),
+               withSpinner(plotOutput(ns('outPlotClPCA'))),
+               br(),
                withSpinner(plotOutput(ns('outPlotTree'))),
                br(),
-               withSpinner(plotOutput(ns('outPlotSilhForCut'))),
-               br(),
-               withSpinner(plotOutput(ns('outPlotClPCA')))
+               withSpinner(plotOutput(ns('outPlotSilhForCut')))
       )
     )
   )

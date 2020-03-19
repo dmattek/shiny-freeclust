@@ -18,7 +18,6 @@
 
 
 require(gplots) # heatmap.2
-require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(d3heatmap) # interactive heatmap
 require(bclust) # Bayesian clustering
@@ -251,18 +250,7 @@ clustBay <- function(input, output, session, dataMod) {
     if (is.null(locBclust))
       return(NULL)
     
-    # number of clusters at which dendrogram is cut
-    locNclust = returnNclust()
-    if (is.null(locNclust))
-      return(NULL)
-    
-    # make a palette with the amount of colours equal to the number of clusters
-    locCol = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = locNclust)
-    
     locDend <- as.dendrogram(locBclust)
-    locDend <- color_branches(locDend, 
-                              col = locCol,
-                              k = locNclust)
     
     return(locDend)
     

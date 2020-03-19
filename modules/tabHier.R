@@ -16,7 +16,6 @@
 
 
 require(pheatmap)
-require(dendextend) # color_branches
 require(RColorBrewer) # brewer.pal
 require(heatmaply) # for interactive heatmap
 require(shinyBS) # for tooltips
@@ -67,7 +66,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                ns('slNclust'),
                'Number of dendrogram branches to cut',
                min = 1,
-               max = 10,
+               max = MAXNCLUST,
                value = 1,
                step = 1,
                ticks = TRUE,
@@ -501,13 +500,6 @@ clustHier <- function(input, output, session, dataMod) {
       dendextend::cutree(tree = locDend, 
                          k = locNclust))
     names(locRowAnnotation) = "cluster"
-    
-    # Uncomment to have dendrogram branches coloured the same as side annotations.
-    # The static plot has a regular black dendrogram, thus commented here for consistency.
-    # locDend <- dendextend::color_branches(locDend, 
-    #                                       col = locColorDend,
-    #                                       k = locNclust)
-    
     
     if (input$selectDend) {
       assign("var.tmp.1", locDend)

@@ -16,14 +16,12 @@ The app uses the follwoing packages:
 
 - magrittr (provides %>% operator)
 - shiny
-- shinyjs
 - shinyBS
 - shinycssloaders
 - data.table (for fast data processing)
-- pheatmap (provides heatmap plot)
-- heatmaply (provides interactive `heatmaply`)
-- ggplot2 (for plotting in cluster validation module)
-- dendextend (provides `color_branches`)
+- pheatmap (provides a static heatmap plot)
+- heatmaply (provides an interactive heatmap)
+- ggplot2 (for plotting in the cluster validation module)
 - RColorBrewer (provides `brewer.pal`)
 - sparcl (provides sparse hierarchical and k-means clustering)
 - dtw (provides Dynamic Time Warping)
@@ -31,11 +29,12 @@ The app uses the follwoing packages:
 
 The complete list of dependencies can also be manually installed from the R console by typing:
 ```
-install.packages(c("shiny", "shinyjs", "shinyBS", "shinycssloaders",
-					"ggplot2", 
-					"pheatmap", "heatmaply",
-					"dendextend", "RColorBrewer", "ggthemes",
-					"data.table", "sparcl", "dtw", "factoextra")) 
+install.packages(c("shiny", "shinyBS", "shinycssloaders",
+                  "data.table",
+                  "ggplot2", 
+                  "pheatmap", "heatmaply",
+                  "RColorBrewer", "ggthemes",
+                  "sparcl", "dtw", "factoextra")) 
 ```
 
 
@@ -58,7 +57,7 @@ One you point your web browser to that address, you should see the app running. 
 
 #### About
 
-The web-app integrates several clustering algorithms. These include a widely-used [hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering) ([hclust](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html)) with a choice of commonly used linkage methods to construct the tree diagram (dendrogram). Additionally, sparse hierarchical clustering ([sparcl](https://cran.r-project.org/web/packages/sparcl/)) is tailored to cluster high-dimensional data (with many more variables than samples). The sparse hierarchical provide the information about the **importance** of a specific categories across the samples.
+The web-app integrates several clustering algorithms. These include a widely-used [hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering) ([hclust](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html)) with a choice of commonly used linkage methods to construct the tree diagram (dendrogram). Additionally, sparse hierarchical clustering ([sparcl](https://cran.r-project.org/web/packages/sparcl/)) is tailored to cluster high-dimensional data (with many more variables than samples). The sparse hierarchical provide the information about the **importance** of features/measurements across the samples.
 
 The app allows for rudimentary data manipulation, such as rescaling, removal of missing data, trimming/clipping outliers. The sequence of these operations applied to data is indicated by numbers in brackets in the UI. 
 

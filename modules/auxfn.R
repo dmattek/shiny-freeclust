@@ -38,7 +38,9 @@ PLOTWIDTH = 85 # in percent
 # default number of facets in plots
 PLOTNFACETDEFAULT = 3
 
-
+# Maximum number of clusters in sliders
+# for selecting dendrogram cuts
+MAXNCLUST = 20
 
 helpText.server = c(
   alDataFormat =  paste0(

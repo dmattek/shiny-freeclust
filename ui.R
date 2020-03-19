@@ -7,24 +7,35 @@
 
 
 library(shiny)
-library(shinyjs) #http://deanattali.com/shinyjs/
+#library(shinyjs) #http://deanattali.com/shinyjs/
 library(shinyBS)
 
 shinyUI(fluidPage(
-  useShinyjs(),
+  #useShinyjs(),
   
   # Application title
   title = "FreeClust",
   
   # Sidebar with a slider input for number of bins
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(width = 3,
       # Load data
       fileInput(
         'fileDataLoad',
         actionLink("alDataFormat", 'Select file and click Load Data'),
         accept = c('text/csv', 'text/comma-separated-values,text/plain')
       ),
+      
+      actionButton("butDataLoad",  'Load Data'),
+      
+      actionButton("butDataGen1", 'Synthetic data'),
+      bsTooltip("butDataGen1", 
+                "Use classic iris dataset for testing.",
+                placement = "top",
+                trigger = "hover"),
+
+      br(),
+      br(),
       
       radioButtons(
         "rBflipRowCol",
@@ -65,18 +76,11 @@ shinyUI(fluidPage(
                        'comma ,' = ','),
         selected = '.'
       ),
-      actionButton("butDataLoad",  'Load Data'),
       
-      actionButton("butReset", "Reset file input"),
-      
-      actionButton("butDataGen1", 'Synthetic data'),
-      bsTooltip("butDataGen1", 
-                "Use classic iris dataset for testing.",
-                placement = "top",
-                trigger = "hover")
+      #actionButton("butReset", "Reset file input"),
     ),
     
-    mainPanel(
+    mainPanel(width = 9,
       tabsetPanel(
         
         # Show a plot of the distribution
