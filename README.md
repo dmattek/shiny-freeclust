@@ -68,6 +68,6 @@ The app allows for rudimentary data manipulation, such as rescaling, removal of 
 
 #### Data format
 
-Users can upload a text file in a wide CSV format: samples and measurements/features should be arranged in columns and rows. The first column and the first row should contain names of samples and/or features, depending on the arrangement. The data can be transposed in the UI. An example file is in the *example-data* folder.
+Users can upload a text file in a wide CSV format: samples and measurements/features should be arranged in columns and rows. The first column and the first row should contain names of samples and/or features, depending on the arrangement. The data can be transposed in the UI. Several example datasets are in the [example-data](example-data) folder.
 
 **Warning!** Depending on regional settings (i.e. *locale*), Excel might save the CSV file differently from the default setting where columns are separated by a comma and dot is used as a decimal separator. For example, a German locale would result in a CSV file with columns separated by a semicolon and decimal point signified by a comma. The app can account for such variations of the input format as well as the convention used to represent missing values, e.g. whether it is a character string “NA”, a dash “-“, or an empty space.
