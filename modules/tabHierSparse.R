@@ -215,7 +215,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
                numericInput(
                  ns('inPlotHeight'),
                  'Plot height',
-                 value = 800,
+                 value = 1200,
                  min = 100,
                  step = 100
                )

@@ -207,7 +207,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                numericInput(
                  ns('inPlotHeight'),
                  'Plot height',
-                 value = 800,
+                 value = 1200,
                  min = 100,
                  step = 100
                ),
