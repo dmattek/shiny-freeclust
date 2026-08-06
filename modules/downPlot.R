@@ -27,9 +27,11 @@ downPlotUI <- function(id, label = "Download Plot") {
     fluidRow(
       # CSS to make label next to text input
       # From: https://stackoverflow.com/a/45299050/1898713
+      # A class rather than an id: this module is instantiated once per tab,
+      # so an id here would appear several times in the same page.
       tags$head(
-        tags$style(type="text/css", 
-                   "#inline label{ display: table-cell; text-align: center; vertical-align: middle; } #inline .form-group { display: table-row;}")
+        tags$style(type="text/css",
+                   ".inline label{ display: table-cell; text-align: center; vertical-align: middle; } .inline .form-group { display: table-row;}")
       ),
       
       column(3,
@@ -39,7 +41,7 @@ downPlotUI <- function(id, label = "Download Plot") {
       
       column(
         2,
-        tags$div(id = "inline", 
+        tags$div(class = "inline", 
                  numericInput(
                    ns('inPlotWidth'),
                    "Width [in]",
@@ -52,7 +54,7 @@ downPlotUI <- function(id, label = "Download Plot") {
       ),
       column(
         2,
-        tags$div(id = "inline", 
+        tags$div(class = "inline", 
                  numericInput(
                    ns('inPlotHeight'),
                    "Height [in]",

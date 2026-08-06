@@ -34,9 +34,34 @@ runPipeline = function(in.dm, ...) {
 locDM = matrix(as.numeric(1:20), nrow = 5,
                dimnames = list(sprintf("s%d", 1:5), LETTERS[1:4]))
 
+# The module attaches a record of what it did; drop it when comparing values
+dropProv = function(in.dm) mySetProvenance(in.dm, NULL)
+
 
 test_that("data passes through untouched when nothing is enabled", {
-  expect_equal(runPipeline(locDM), locDM)
+  expect_equal(dropProv(runPipeline(locDM)), locDM)
+})
+
+test_that("the pipeline records what it did", {
+  locProv = myGetProvenance(runPipeline(locDM,
+                                        selRescale = "zscore",
+                                        chBdataNA20 = TRUE,
+                                        chBdataTrim = TRUE,
+                                        inDataTrimMin = 2,
+                                        inDataTrimMax = 9))
+
+  expect_true(any(grepl("Rescaling: zscore", locProv)))
+  expect_true(any(grepl("Missing values set to zero: yes", locProv)))
+  expect_true(any(grepl("Trimming: discard below 2 and above 9", locProv)))
+  expect_true(any(grepl("Clipping: none", locProv)))
+
+  # and says so honestly when nothing was applied
+  locProv = myGetProvenance(runPipeline(locDM))
+  expect_true(any(grepl("Rescaling: noresc", locProv)))
+  expect_true(any(grepl("Trimming: none", locProv)))
+
+  # the lines are usable as a CSV comment header
+  expect_true(all(grepl("^# ", myFormatProvenance(locProv))))
 })
 
 test_that("NULL data in gives NULL out", {

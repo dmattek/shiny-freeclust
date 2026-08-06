@@ -104,6 +104,40 @@ l.col.pal.dend = list(
 # Seed used wherever a result has to be reproducible between runs
 SEEDRNG = 123
 
+## Provenance ----
+
+# A record of how a dataset was produced, carried as an attribute on the
+# matrix itself. Every stage adds what it did, so anything downloaded at the
+# end can state the settings that produced it: a cluster assignment on its own
+# says nothing about whether the data was z-scored or trimmed first.
+#
+# Kept on the matrix rather than passed alongside it so that it cannot go out
+# of step with the values it describes. Note that t() and scale() do not carry
+# attributes over, so a stage that transforms the matrix has to read the
+# record first and set it again afterwards.
+#
+# Arguments:
+# in.dm    - data matrix
+# in.lines - character vector of "Setting: value" lines
+
+mySetProvenance = function(in.dm, in.lines) {
+  attr(in.dm, "provenance") = in.lines
+
+  return(in.dm)
+}
+
+myGetProvenance = function(in.dm) {
+  return(attr(in.dm, "provenance"))
+}
+
+# Format the record as comment lines to head a CSV. Both fread and
+# read.csv(comment.char = "#") skip these, so a downloaded file can still be
+# read straight back in.
+myFormatProvenance = function(in.lines) {
+  return(paste0("# ", in.lines))
+}
+
+
 ## Data processing ----
 
 # Evaluate an expression under a fixed RNG seed and put the caller's random

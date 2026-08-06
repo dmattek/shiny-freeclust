@@ -448,7 +448,25 @@ dataHist <- function(id, inDataMod) {
         locDM[locDM > locClipMax] = locClipMax
     }
 
-    return(locDM)
+    # Record the four operations this tab applies, on top of what the sidebar
+    # recorded. The rescaling above drops attributes, so the incoming record
+    # is read from the module's input rather than from locDM.
+    return(mySetProvenance(locDM, c(
+      myGetProvenance(inDataMod()),
+      paste0("[1] Rescaling: ", input$selRescale),
+      paste0("[2] Missing values set to zero: ",
+             ifelse(input$chBdataNA20, "yes", "no")),
+      paste0("[3] Trimming: ",
+             ifelse(input$chBdataTrim,
+                    paste0("discard below ", input$inDataTrimMin,
+                           " and above ", input$inDataTrimMax),
+                    "none")),
+      paste0("[4] Clipping: ",
+             ifelse(input$chBdataClip,
+                    paste0("cap below ", input$inDataClipMin,
+                           " and above ", input$inDataClipMax),
+                    "none"))
+    )))
   })
   
   # Histogram ----

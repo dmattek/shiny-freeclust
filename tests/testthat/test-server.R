@@ -121,6 +121,63 @@ test_that("a file whose columns are not numeric is refused", {
   })
 })
 
+test_that("the loaded data carries a record of how it was read", {
+  locCsv = makeCsv()
+
+  shiny::testServer(srvFreeClust, {
+    do.call(session$setInputs, locBaseInputs)
+    session$setInputs(fileDataLoad = list(datapath = locCsv, name = "mydata.csv"),
+                      butDataLoad = 1)
+
+    locProv = myGetProvenance(dataMod())
+    expect_true(any(grepl("Data source: mydata.csv", locProv)))
+    expect_true(any(grepl("Samples read from: rows", locProv)))
+
+    session$setInputs(rBflipRowCol = "col")
+    expect_true(any(grepl("Samples read from: columns",
+                          myGetProvenance(dataMod()))))
+
+    # the synthetic data says so too
+    session$setInputs(butDataGen1 = 1)
+    expect_true(any(grepl("synthetic data", myGetProvenance(dataMod()))))
+  })
+})
+
+test_that("a downloaded cluster assignment states its settings and still reads back", {
+  locCsv = makeCsv()
+
+  locM = as.matrix(iris[1:12, 1:4])
+  rownames(locM) = sprintf("s%02d", 1:12)
+
+  shiny::testServer(clustHier, args = list(dataMod = shiny::reactive({
+    mySetProvenance(locM,
+                    c("Data source: mydata.csv", "[1] Rescaling: zscore"))
+  })), {
+    session$setInputs(slNclust = 3, selectDist = "euclidean",
+                      selectLinkage = "average")
+    session$elapse(2 * MILLIS)
+
+    # a download handler under testServer yields the path it wrote to
+    locPath = output$downClAss
+
+    locLines = readLines(locPath)
+    locHead = grep("^#", locLines, value = TRUE)
+
+    expect_true(any(grepl("Data source: mydata.csv", locHead)))
+    expect_true(any(grepl("Rescaling: zscore", locHead)))
+    expect_true(any(grepl("Dissimilarity measure: euclidean", locHead)))
+    expect_true(any(grepl("Linkage method: average", locHead)))
+    expect_true(any(grepl("cut into: 3 clusters", locHead)))
+
+    # the comment header must not stop the file being read again
+    locBack = data.table::fread(locPath)
+    expect_equal(nrow(locBack), 12)
+    expect_equal(names(locBack), c("id", "cl"))
+    expect_setequal(locBack$id, rownames(locM))
+    expect_setequal(unique(locBack$cl), 1:3)
+  })
+})
+
 test_that("repeated sample names are made unique rather than refused", {
   locPath = tempfile(fileext = ".csv")
   writeLines(c("id,a,b", "ctrl,1,2", "ctrl,3,4", "treat,5,6"), locPath)

@@ -231,11 +231,24 @@ clustHier <- function(id, dataMod) {
     },
     
     content = function(file) {
+      # Head the file with the settings that produced it. Cluster numbers on
+      # their own do not say whether the data was rescaled or trimmed first.
+      writeLines(myFormatProvenance(c(
+        myGetProvenance(dataMod()),
+        paste0("Clustering: hierarchical"),
+        paste0("Dissimilarity measure: ", input$selectDist),
+        paste0("Linkage method: ", input$selectLinkage),
+        paste0("Dendrogram cut into: ", returnNclust(), " clusters"),
+        paste0("Downloaded: ", format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
+      )), file)
+
       # returnNclust(), not input$slNclust: the plot is drawn from the
       # debounced value, and the download has to describe the same cut.
       fwrite(x = myGetDataCl(calcHC(),
                              returnNclust()),
              file = file,
+             append = TRUE,
+             col.names = TRUE,
              row.names = FALSE)
     }
   )

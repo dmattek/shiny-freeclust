@@ -137,6 +137,15 @@ function(input, output, session) {
       locDM = as.matrix(locDT)
       rownames(locDM) = loc1stColVal
 
+      # Record how the file was read, so a download can say so later
+      locDM = mySetProvenance(locDM, c(
+        paste0("Data source: ", input$fileDataLoad$name),
+        paste0("Column separator: ", input$rButDataSep),
+        paste0("Decimal point: ", input$rButDataDec),
+        paste0("Missing values marked by: ",
+               ifelse(input$rButDataNA == "", "empty field", input$rButDataNA))
+      ))
+
       return(locDM)
     }
   }
@@ -157,7 +166,8 @@ function(input, output, session) {
                          "alertDataLoadDupIDs"))
       closeAlert(session, locAlertId)
 
-    dataIn(myUserDataGenIris())
+    dataIn(mySetProvenance(myUserDataGenIris(),
+                           "Data source: synthetic data (iris)"))
   })
 
   observeEvent(input$butDataLoad, {
@@ -176,6 +186,9 @@ function(input, output, session) {
     if (is.null(locDM))
       return(NULL)
 
+    # read the record before transposing, t() does not carry it over
+    locProv = myGetProvenance(locDM)
+
     if (input$rBflipRowCol == "col") {
       # work with data matrix, where:
       # row - categories/features
@@ -184,7 +197,11 @@ function(input, output, session) {
       locDM = t(locDM)
     }
 
-    return(locDM)
+    return(mySetProvenance(locDM, c(
+      locProv,
+      paste0("Samples read from: ",
+             ifelse(input$rBflipRowCol == "col", "columns", "rows"))
+    )))
   })
   
   ## Modules ----
