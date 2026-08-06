@@ -46,5 +46,5 @@ source('modules/downPlot.R')
 source('modules/tabHist.R')
 source('modules/tabHier.R')
 source('modules/tabHierSparse.R')
-#source('modules/tabBayClust.R')
+# Bayesian clustering is retired, see retired/README.md
 source('modules/tabClValid.R')

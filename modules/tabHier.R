@@ -10,7 +10,7 @@
 #  clustHierUI('TabClustHier'))
 #
 # in server.R
-# callModule(clustHier, 'TabClustHier', dataMod)
+# clustHier('TabClustHier', dataMod)
 # where dataMod is the output from a reactive function 
 # that returns a dataset in wide format ready for clustering
 
@@ -262,10 +262,11 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
 }
 
 # SERVER ----
-clustHier <- function(input, output, session, dataMod) {
-  
+clustHier <- function(id, dataMod) {
+  moduleServer(id, function(input, output, session) {
+
   ns <- session$ns
-  
+
   # Return the number of clusters from the slider 
   # and delay by a constant in milliseconds defined in auxfunc.R
   returnNclust = reactive({
@@ -464,7 +465,7 @@ clustHier <- function(input, output, session, dataMod) {
   })
   
   # Hierarchical - download png
-  callModule(downPlot, "downPlotHierPNG", createFnameHeatMap, plotHier)
+  downPlot("downPlotHierPNG", createFnameHeatMap, plotHier)
   
   # Hierarchical clustering - interactive version
   output$outPlotInt <- renderPlotly({
@@ -550,6 +551,6 @@ clustHier <- function(input, output, session, dataMod) {
              title = "Hierarchical clustering",
              content = helpText.clHier[["alLearnMore"]],
              trigger = "click")
-  
-  
+
+  })
 }

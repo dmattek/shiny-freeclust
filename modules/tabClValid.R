@@ -164,10 +164,11 @@ clustValidUI <- function(id, label = "Validation") {
 }
 
 # SERVER ----
-clustValid <- function(input, output, session, inDataWide) {
-  
+clustValid <- function(id, inDataWide) {
+  moduleServer(id, function(input, output, session) {
+
   ns = session$ns
-  
+
   # Return the number of clusters from the slider 
   # and delay by a constant in milliseconds defined in auxfunc.R
   returnNclust = reactive({
@@ -528,6 +529,8 @@ clustValid <- function(input, output, session, inDataWide) {
              title = "Internal validation",
              content = helpText.clValid[["alLearnMoreInt"]],
              trigger = "click")
+
+  })
 }
 
 

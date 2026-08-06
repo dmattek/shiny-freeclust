@@ -24,7 +24,9 @@ There is no test suite and no linter config. `misc-scripts/testCl.R` is a scratc
 
 Classic three-file Shiny layout (`global.R`, `ui.R`, `server.R`) plus one file per tab in `modules/`. `global.R` runs the dependency check and then `source()`s every module — **a new module must be sourced there or it will not exist at UI-build time**.
 
-Modules use the **old `callModule` API**, not `moduleServer`. Each file exports a `xxxUI(id)` returning a `tagList` of `ns()`-namespaced widgets, and a `xxx(input, output, session, ...)` server function. Wiring a new tab means three edits: `source()` in `global.R`, `tabPanel(..., xxxUI('TabId'))` in `ui.R`, `callModule(xxx, 'TabId', dataModProc)` in `server.R`.
+Each module file exports a `xxxUI(id)` returning a `tagList` of `ns()`-namespaced widgets, and a `xxx(id, ...)` server function whose body is wrapped in `moduleServer(id, function(input, output, session) { ... })`. Wiring a new tab means three edits: `source()` in `global.R`, `tabPanel(..., xxxUI('TabId'))` in `ui.R`, `xxx('TabId', dataModProc)` in `server.R`.
+
+Note that the bodies inside `moduleServer` are indented as though they were still top-level in the server function; the conversion from the superseded `callModule` API deliberately left indentation alone to keep that diff readable. `ui.R` and `server.R` return their objects directly rather than through the deprecated `shinyUI()`/`shinyServer()` wrappers.
 
 ### Data flow
 
@@ -54,12 +56,12 @@ Note the split inside that module: `rescaledData()` (steps 1–2) drives the his
 Shared constants (ALL-CAPS globals: `MILLIS`, `MAXNCLUST`, `PLOTFONT*`, `SIGNIFDIGITS*`), heatmap/dendrogram palette lists, and helpers:
 
 - `myGetDataCl` vs. `myGetDataClSpar` — cluster assignment tables. `sparcl` drops the original rownames, so the sparse variant takes the ID vector as a third argument; the sparse module also re-attaches `rownames` to the pheatmap row annotation from the original matrix for the same reason.
-- `myHcut` / `myNbclust` — reimplementations of `factoextra::hcut` / `fviz_nbclust` that **require** a `dist` object rather than raw data. This exists so non-base metrics (DTW via `proxy::dist`) work at all; `myNbclust` reaches into `factoextra:::` internals and drops the GAP statistic.
+- `myHcut` / `myNbclust` — reimplementations of `factoextra::hcut` / `fviz_nbclust` that **require** a `dist` object rather than raw data. This exists so non-base metrics (DTW via `proxy::dist`) work at all; `myNbclust` drops the GAP statistic. Its two scoring helpers, `myAveSilWidth` and `myWithinSS`, replace unexported `factoextra:::` internals — keep them public-API only. `myNbclust` also special-cases `k = 1` for the WSS curve, because `factoextra::hcut` rejects it.
 - `myGgplotTheme` — the shared ggplot theme; `plotly`/`heatmaply` and `pheatmap` outputs are styled separately.
 
 ### Plot downloads
 
-`modules/downPlot.R` is a nested module invoked from inside other modules — `downPlotUI(ns('downPlotHierPNG'), "")` in the UI, `callModule(downPlot, "downPlotHierPNG", fnameReactive, plotFn)` in the server. Because of that, plot bodies are written as **plain functions** (e.g. `plotHier()`), not reactives, so they can be both `renderPlot`ed and re-executed inside a `pdf()`/`png()` device. The filename reactive's extension (`.pdf` vs `.png`) selects the device and the button label.
+`modules/downPlot.R` is a nested module invoked from inside other modules — `downPlotUI(ns('downPlotHierPNG'), "")` in the UI, `downPlot("downPlotHierPNG", fnameReactive, plotFn)` in the server. Because of that, plot bodies are written as **plain functions** (e.g. `plotHier()`), not reactives, so they can be both `renderPlot`ed and re-executed inside a `pdf()`/`png()` device. The filename reactive's extension (`.pdf` vs `.png`) selects the device and the button label.
 
 ## Conventions
 
@@ -73,6 +75,6 @@ Shared constants (ALL-CAPS globals: `MILLIS`, `MAXNCLUST`, `PLOTFONT*`, `SIGNIFD
 
 ## Inactive code
 
-`modules/tabBayClust.R` (Bayesian clustering) is sourced-out in `global.R` and its tab is commented out in `ui.R`/`server.R`: `bclust` was removed from CRAN, and the module still depends on the retired `d3heatmap` and `gplots`. Reviving it means an archive install plus porting the heatmap to `heatmaply`/`pheatmap`.
+Bayesian clustering lives in `retired/tabBayClust.R` and is not sourced; see `retired/README.md` for why and for what reviving it would take. Nothing in `retired/` is loaded, so it is never syntax-checked and will drift.
 
 The `dataGen1` eventReactive in `server.R` is dead code and calls a misspelled `myUerDataGenIris()`; the live path is `dataInBoth`, which calls `myUserDataGenIris()` directly.

@@ -240,6 +240,47 @@ myGetDataClSpar = function(in.dend, in.k, in.id) {
 
 # Cluster validation ----
 
+# Average silhouette width of a partition.
+# Stands in for the unexported factoextra:::.get_ave_sil_width, so that an
+# upstream rename cannot break the validation tab. cluster ships with R.
+#
+# Arguments:
+# in.diss - dissimilarity matrix, object of class dist
+# in.cl   - vector of cluster assignments
+
+myAveSilWidth = function(in.diss, in.cl) {
+  locSil = cluster::silhouette(in.cl, in.diss)
+
+  # silhouette() returns NA rather than a matrix for a single cluster
+  if (length(locSil) == 1 && is.na(locSil))
+    return(NA_real_)
+
+  return(mean(locSil[, 3]))
+}
+
+# Total within-cluster sum of squares of a partition, computed from the
+# dissimilarity matrix rather than from the data, so that it is available for
+# metrics such as DTW. Stands in for the unexported factoextra:::.get_withinSS.
+#
+# Arguments:
+# in.diss - dissimilarity matrix, object of class dist
+# in.cl   - vector of cluster assignments
+
+myWithinSS = function(in.diss, in.cl) {
+  locDM = as.matrix(stats::as.dist(in.diss))
+
+  locSS = vapply(split(seq_along(in.cl), in.cl), function(locIdx) {
+    if (length(locIdx) <= 1)
+      return(0)
+
+    locSub = locDM[locIdx, locIdx, drop = FALSE]
+
+    return(sum(locSub[lower.tri(locSub)] ^ 2) / length(locIdx))
+  }, FUN.VALUE = numeric(1))
+
+  return(sum(locSS))
+}
+
 #Customize factoextra functions to accept dissimilarity matrix from start. Otherwise can't use distance functions that are not in base R, like DTW.
 # Inherit and adapt hcut function to take input from UI, used for fviz_clust
 
@@ -308,7 +349,7 @@ myNbclust <-
         for (i in 2:k.max) {
           clust <- FUNcluster(x, i, ...)
           v[i] <-
-            factoextra:::.get_ave_sil_width(diss, clust$cluster)
+            myAveSilWidth(diss, clust$cluster)
         }
       }
       else if (method == "wss") {
@@ -317,8 +358,16 @@ myNbclust <-
         loc.ylab <- "Total within cluster sum of squares"
         
         for (i in 1:k.max) {
-          clust <- FUNcluster(x, i, ...)
-          v[i] <- factoextra:::.get_withinSS(diss, clust$cluster)
+          # The elbow plot starts at a single cluster, but factoextra::hcut
+          # refuses k = 1. Assign every sample to one cluster directly;
+          # the resulting total sum of squares is the reference the elbow
+          # is read against.
+          if (i == 1) {
+            v[i] <- myWithinSS(diss, rep(1, attr(diss, "Size")))
+          } else {
+            clust <- FUNcluster(x, i, ...)
+            v[i] <- myWithinSS(diss, clust$cluster)
+          }
         }
       }
       

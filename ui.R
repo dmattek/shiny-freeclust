@@ -10,7 +10,7 @@ library(shiny)
 #library(shinyjs) #http://deanattali.com/shinyjs/
 library(shinyBS)
 
-shinyUI(fluidPage(
+fluidPage(
   #useShinyjs(),
   
   # Application title
@@ -103,11 +103,8 @@ shinyUI(fluidPage(
           clustHierSparUI('TabClustHierSpar')
         ),
         
-        # tabPanel(
-        #   'Bayesian',
-        #   clustBayUI('TabClustBay')
-        # ),
-        
+        # A Bayesian clustering tab used to sit here; see retired/README.md
+
         # cluster validation
         tabPanel(
           'Validation',
@@ -116,4 +113,4 @@ shinyUI(fluidPage(
         
       )
     )
-  )))
+  ))

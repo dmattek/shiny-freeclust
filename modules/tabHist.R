@@ -10,7 +10,7 @@
 #  clustHierUI('TabClustHier'))
 #
 # in server.R
-# callModule(clustHier, 'TabClustHier', dataMod)
+# clustHier('TabClustHier', dataMod)
 # where dataMod is the output from a reactive function 
 # that returns a dataset in wide format ready for clustering
 #
@@ -173,10 +173,11 @@ dataHistUI <- function(id, label = "Histogram") {
 }
 
 # SERVER ----
-dataHist <- function(input, output, session, inDataMod) {
-  
+dataHist <- function(id, inDataMod) {
+  moduleServer(id, function(input, output, session) {
+
   ns <- session$ns
-  
+
   # Dynamic UI ----
   output$dataMin <- renderText({
     cat(file = stdout(), 'tabHist:dataMin\n')
@@ -503,4 +504,6 @@ dataHist <- function(input, output, session, inDataMod) {
              trigger = "click")
   
   return(dmReturn)
+
+  })
 }

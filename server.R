@@ -19,7 +19,7 @@ options(spinner.color="#00A8AA")
 
 ## SERVER ----
 
-shinyServer(function(input, output, session) {
+function(input, output, session) {
   #useShinyjs()
   
   # This is only set at session start
@@ -218,19 +218,18 @@ shinyServer(function(input, output, session) {
   ## Modules ----
   
   ##### Histogram of dataset
-  dataModProc = callModule(dataHist, 'TabDataHist', dataMod)
-  
+  dataModProc = dataHist('TabDataHist', dataMod)
+
   ##### Hierarchical clustering: hclust
-  callModule(clustHier, 'TabClustHier', dataModProc)
-  
+  clustHier('TabClustHier', dataModProc)
+
   ##### Sparse hierarchical clustering using sparcl
-  callModule(clustHierSpar, 'TabClustHierSpar', dataModProc)
-  
-  ##### Bayesian clustering
-  #callModule(clustBay, 'TabClustBay', dataModProc)
-  
+  clustHierSpar('TabClustHierSpar', dataModProc)
+
+  ##### Bayesian clustering is retired, see retired/README.md
+
   ##### Hierarchical validation
-  callModule(clustValid, 'TabClValid', dataModProc)
+  clustValid('TabClValid', dataModProc)
   
   # Pop-overs ----
   addPopover(session, 
@@ -238,5 +237,5 @@ shinyServer(function(input, output, session) {
              title = "Data format",
              content = helpText.server[["alDataFormat"]],
              trigger = "click")
-  
-})
+
+}

@@ -10,7 +10,7 @@
 #  clustHierUI('TabClustHierSpar'))
 #
 # in server.R
-# callModule(clustHierSpar, 'TabClustHierSpar', dataMod)
+# clustHierSpar('TabClustHierSpar', dataMod)
 # where dataMod is the output from a reactive function 
 # that returns a dataset in wide format ready for clustering
 
@@ -271,9 +271,11 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
 }
 
 # SERVER ----
-clustHierSpar <- function(input, output, session, dataMod) {
+clustHierSpar <- function(id, dataMod) {
+  moduleServer(id, function(input, output, session) {
+
   ns = session$ns
-  
+
   
   # Return the number of clusters from the slider 
   # and delay by a constant in milliseconds defined in auxfunc.R
@@ -465,7 +467,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
   })
   
   # Sparse Hierarchical - download png
-  callModule(downPlot, "downPlotHierSparPNG", createFnameHeatMap, plotHierSpar)
+  downPlot("downPlotHierSparPNG", createFnameHeatMap, plotHierSpar)
   
   
   # Sparse Hierarchical clustering (sparcl) interactive version
@@ -570,5 +572,6 @@ clustHierSpar <- function(input, output, session, dataMod) {
              title = "Variable importance",
              content = helpText.clHierSpar[["alImportance"]],
              trigger = "click")
-  
+
+  })
 }

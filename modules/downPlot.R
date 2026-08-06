@@ -8,7 +8,7 @@
 # downPlotUI('uniqueID', "your_label")
 #
 # in server.R
-# callModule(downPlot, "uniqueID", 'fname.pdf', input_plot_to_save)
+# downPlot("uniqueID", 'fname.pdf', input_plot_to_save)
 
 helpText.downPlot = c(
   downPlot = "Download a rendered plot in PDF (or PNG in case of a heatmap) formats.",
@@ -66,8 +66,9 @@ downPlotUI <- function(id, label = "Download Plot") {
   )
 }
 
-downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
-  
+downPlot <- function(id, in.fname, in.plot, in.gg = FALSE) {
+  moduleServer(id, function(input, output, session) {
+
   output$uiDownButton = renderUI({
     ns <- session$ns
     
@@ -111,5 +112,6 @@ downPlot <- function(input, output, session, in.fname, in.plot, in.gg = FALSE) {
       }
     }
   )
-  
+
+  })
 }
