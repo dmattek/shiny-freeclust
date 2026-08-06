@@ -271,55 +271,12 @@ clustHier <- function(id, dataMod) {
       need(!is.null(locHC), "Did not cluster")
     )
     
-    # Set colors palette for the heatmap
-    locColorHM = myGetHeatmapColors(input$selectPalette, input$inRevPalette)
-    
-    # number of clusters at which dendrogram is cut
-    locNclust = returnNclust()
-    
-    # make a palette for the dendrogram with the amount of colours equal to the number of clusters
-    locColorDend = myGetDendColors(input$selectPaletteDend, locNclust)
-    
-    # Create row-side annotations
-    locRowAnnotation <- as.data.frame(
-      dendextend::cutree(tree = locHC, 
-                         k = locNclust))
-    names(locRowAnnotation) = "cluster"
-    rownames(locRowAnnotation) = rownames(locDM)
-    
-    # pheatmap accepts direct output from hclust,
-    # NOT as.dendrogram(x)
-    if (input$selectDend) {
-      locClustRows = locHC
-    } else {
-      locClustRows = FALSE
-    }
-    
-    
-    pheatmap::pheatmap(
+    myPlotHeatmap(
       locDM,
-      color = locColorHM,
-      cluster_rows = locClustRows,
-      cluster_cols = FALSE,
-      cutree_rows = locNclust,
-      annotation_colors = list(cluster = locColorDend),
-      annotation_row = locRowAnnotation, 
-      annotation_names_row = F,
-      legend = T, 
-      annotation_legend = F,
-      na_col = grey(input$slNAcolor),
-      border_color = ifelse(input$chBdispGrid, 
-                            grey(input$slGridColor), 
-                            NA),
-      fontsize_col = input$inFontY,
-      fontsize_row = input$inFontX,
-      angle_col = c("45"),
-      main = paste(
-        "Distance measure: ",
-        input$selectDist,
-        "\nLinkage method: ",
-        input$selectLinkage
-      )
+      locHC,
+      returnNclust(),
+      myHeatmapOpts(input),
+      in.title = myHeatmapTitle(input$selectDist, input$selectLinkage)
     )
   }
   
@@ -352,51 +309,12 @@ clustHier <- function(id, dataMod) {
       need(!is.null(locHC), "Did not perform clustering")
     )
     
-    # Set colors palette for the heatmap
-    locColorHM = myGetHeatmapColors(input$selectPalette, input$inRevPalette)
-    
-    # number of clusters at which dendrogram is cut
-    locNclust = returnNclust()
-    
-    # make a palette for the dendrogram with the amount of colours equal to the number of clusters
-    locColorDend = myGetDendColors(input$selectPaletteDend, locNclust)
-    
-    # Create row-side annotations
-    locDend = as.dendrogram(locHC)
-    locRowAnnotation <- as.data.frame(
-      dendextend::cutree(tree = locDend, 
-                         k = locNclust))
-    names(locRowAnnotation) = "cluster"
-    
-    if (input$selectDend) {
-      locRowv = locDend
-      locDendType = "row"
-    } else {
-      locRowv = FALSE
-      locDendType = "none"
-    }
-    
-    heatmaply(
-      locDM, 
-      Rowv = locRowv,
-      dendrogram = locDendType,
-      trace = "none",
-      colors = locColorHM, 
-      row_side_colors = locRowAnnotation,
-      row_side_palette = locColorDend,
-      grid_color = ifelse(input$chBdispGrid, grey(input$slGridColor), NA), 
-      na.value = grey(input$slNAcolor),
-      cexCol = input$inFontY * 0.1,
-      cexRow = input$inFontX * 0.1,
-      margins = c(50, 50, 100, 0),
-      xaxis_height = 100,
-      yaxis_width = 100,
-      main = paste(
-        "Distance measure: ",
-        input$selectDist,
-        "\nLinkage method: ",
-        input$selectLinkage
-      )
+    myPlotHeatmaply(
+      locDM,
+      as.dendrogram(locHC),
+      returnNclust(),
+      myHeatmapOpts(input),
+      in.title = myHeatmapTitle(input$selectDist, input$selectLinkage)
     )
   })
   

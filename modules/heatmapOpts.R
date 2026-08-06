@@ -12,6 +12,136 @@
 # input$slNAcolor, input$selectPalette and the rest exactly as before.
 
 require(shinyBS) # for tooltips
+require(pheatmap) # static heatmap
+require(heatmaply) # interactive heatmap
+require(RColorBrewer) # brewer.pal, via myGetHeatmapColors
+
+
+# Collect the appearance settings that myHeatmapStyleUI produces, so the
+# plotting helpers below take one argument rather than eight. Reads the fixed
+# widget ids declared in this file.
+#
+# Arguments:
+# in.input - the calling module's input object
+
+myHeatmapOpts = function(in.input) {
+  return(list(
+    colHeat  = myGetHeatmapColors(in.input$selectPalette,
+                                  in.input$inRevPalette),
+    palDend  = in.input$selectPaletteDend,
+    showDend = in.input$selectDend,
+    colNA    = grey(in.input$slNAcolor),
+    colGrid  = ifelse(in.input$chBdispGrid,
+                      grey(in.input$slGridColor),
+                      NA),
+    fontRow  = in.input$inFontX,
+    fontCol  = in.input$inFontY
+  ))
+}
+
+
+# Title carried by both heatmaps.
+myHeatmapTitle = function(in.dist, in.linkage) {
+  return(paste("Distance measure: ",
+               in.dist,
+               "\nLinkage method: ",
+               in.linkage))
+}
+
+
+# Cluster assignments as the one-column data frame both heatmaps take as a
+# row annotation.
+#
+# Arguments:
+# in.tree     - hclust or dendrogram to cut
+# in.nclust   - number of branches to cut it into
+# in.rownames - sample names to attach. pheatmap matches its annotation to the
+#               matrix by row name, and sparcl does not preserve them, so the
+#               static plots pass them in explicitly. heatmaply matches by
+#               position and leaves this NULL.
+
+myGetRowAnnotation = function(in.tree, in.nclust, in.rownames = NULL) {
+  locAnn = as.data.frame(dendextend::cutree(tree = in.tree,
+                                            k = in.nclust))
+  names(locAnn) = "cluster"
+
+  if (!is.null(in.rownames))
+    rownames(locAnn) = in.rownames
+
+  return(locAnn)
+}
+
+
+# Static heatmap. Note pheatmap wants the hclust object itself, not
+# as.dendrogram(x).
+#
+# Arguments:
+# in.dm        - data matrix, samples in rows
+# in.hc        - hclust object behind the row dendrogram
+# in.nclust    - number of branches to cut into
+# in.opts      - list from myHeatmapOpts
+# in.colLabels - column labels; NULL keeps the matrix's own colnames
+# in.title     - plot title
+
+myPlotHeatmap = function(in.dm,
+                         in.hc,
+                         in.nclust,
+                         in.opts,
+                         in.colLabels = NULL,
+                         in.title = NA) {
+  pheatmap::pheatmap(
+    in.dm,
+    color = in.opts$colHeat,
+    cluster_rows = if (in.opts$showDend) in.hc else FALSE,
+    cluster_cols = FALSE,
+    cutree_rows = in.nclust,
+    annotation_row = myGetRowAnnotation(in.hc, in.nclust, rownames(in.dm)),
+    annotation_colors = list(cluster = myGetDendColors(in.opts$palDend,
+                                                      in.nclust)),
+    annotation_names_row = FALSE,
+    labels_col = in.colLabels,
+    legend = TRUE,
+    annotation_legend = FALSE,
+    na_col = in.opts$colNA,
+    border_color = in.opts$colGrid,
+    fontsize_row = in.opts$fontRow,
+    fontsize_col = in.opts$fontCol,
+    angle_col = c("45"),
+    main = in.title
+  )
+}
+
+
+# Interactive counterpart of myPlotHeatmap. heatmaply wants a dendrogram
+# where pheatmap wants an hclust.
+#
+# Arguments: as myPlotHeatmap, with in.dend in place of in.hc
+
+myPlotHeatmaply = function(in.dm,
+                           in.dend,
+                           in.nclust,
+                           in.opts,
+                           in.colLabels = NULL,
+                           in.title = "") {
+  heatmaply::heatmaply(
+    in.dm,
+    Rowv = if (in.opts$showDend) in.dend else FALSE,
+    dendrogram = if (in.opts$showDend) "row" else "none",
+    trace = "none",
+    colors = in.opts$colHeat,
+    labCol = in.colLabels,
+    row_side_colors = myGetRowAnnotation(in.dend, in.nclust),
+    row_side_palette = myGetDendColors(in.opts$palDend, in.nclust),
+    grid_color = in.opts$colGrid,
+    na.value = in.opts$colNA,
+    cexCol = in.opts$fontCol * 0.1,
+    cexRow = in.opts$fontRow * 0.1,
+    margins = c(50, 50, 100, 0),
+    xaxis_height = 100,
+    yaxis_width = 100,
+    main = in.title
+  )
+}
 
 
 # Controls for the heatmap's appearance: NA shade, grid lines, both palettes,

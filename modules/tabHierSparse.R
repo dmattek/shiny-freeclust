@@ -41,6 +41,21 @@ helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated
                                             "Loading or rescaling the data clears the result."))
 
 
+# Prefix each feature name with a mark for how strongly sparcl weighted it,
+# using the thresholds described in the alImportance help text above.
+#
+# Arguments:
+# in.ws    - vector of sparcl weight factors, one per feature
+# in.names - the feature names to prefix
+
+myGetSparColLabels = function(in.ws, in.names) {
+  return(paste0(ifelse(in.ws == 0, "",
+                       ifelse(in.ws <= 0.1, "* ",
+                              ifelse(in.ws <= 0.5, "** ", "*** "))),
+                in.names))
+}
+
+
 # UI ----
 clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
   ns <- NS(id)
@@ -312,69 +327,14 @@ clustHierSpar <- function(id, dataMod) {
       need(!is.null(locHC), "Click Cluster! to run sparse hierarchical clustering.")
     )
     
-    # Set colors palette for the heatmap
-    locColorHM = myGetHeatmapColors(input$selectPalette, input$inRevPalette)
-    
-    # number of clusters at which dendrogram is cut
-    locNclust = returnNclust()
-    
-    # make a palette for the dendrogram with the amount of colours equal to the number of clusters
-    locColorDend = myGetDendColors(input$selectPaletteDend, locNclust)
-    
-    # Create row-side annotations
-    locRowAnnotation <- as.data.frame(
-      dendextend::cutree(tree = locHC[["hc"]], 
-                         k = locNclust))
-    names(locRowAnnotation) = "cluster"
-    
-    # for some reason row names are not preserved,
-    # add them from the original dm
-    rownames(locRowAnnotation) = rownames(locDM)
-    
-    # prepend column names with weights from sparcl
-    locColNames = paste0(ifelse(locHC$ws == 0, "",
-                                 ifelse(
-                                   locHC$ws <= 0.1,
-                                   "* ",
-                                   ifelse(locHC$ws <= 0.5, "** ", "*** ")
-                                 )), colnames(locDM))
-    
-    # pheatmap accepts direct output from hclust,
-    # NOT as.dendrogram(x)
-    if (input$selectDend) {
-      locClustRows = locHC[["hc"]]
-    } else {
-      locClustRows = FALSE
-    }
-    
-    
-    pheatmap::pheatmap(
+    myPlotHeatmap(
       locDM,
-      color = locColorHM,
-      cluster_rows = locClustRows,
-      cluster_cols = FALSE,
-      cutree_rows = locNclust,
-      annotation_row = locRowAnnotation,
-      annotation_colors = list(cluster = locColorDend),
-      annotation_names_row = F, 
-      labels_col = locColNames,
-      legend = T, 
-      annotation_legend = F,
-      na_col = grey(input$slNAcolor),
-      border_color = ifelse(input$chBdispGrid, 
-                            grey(input$slGridColor),
-                            NA),
-      fontsize_row = input$inFontX,
-      fontsize_col = input$inFontY,
-      angle_col = c("45"),
-      main = paste(
-        "Distance measure: ",
-        input$selectDist,
-        "\nLinkage method: ",
-        input$selectLinkage
-      )
+      locHC[["hc"]],
+      returnNclust(),
+      myHeatmapOpts(input),
+      in.colLabels = myGetSparColLabels(locHC$ws, colnames(locDM)),
+      in.title = myHeatmapTitle(input$selectDist, input$selectLinkage)
     )
-
   }
   
   # Sparse Hierarchical - display plot
@@ -408,64 +368,13 @@ clustHierSpar <- function(id, dataMod) {
       need(!is.null(locHC), "Click Cluster! to run sparse hierarchical clustering.")
     )
     
-    # Set colors palette for the heatmap
-    locColorHM = myGetHeatmapColors(input$selectPalette, input$inRevPalette)
-    
-    # number of clusters at which dendrogram is cut
-    locNclust = returnNclust()
-    
-    # make a palette for the dendrogram with the amount of colours equal to the number of clusters
-    locColorDend = myGetDendColors(input$selectPaletteDend, locNclust)
-    
-    # Create row-side annotations
-    locDend = as.dendrogram(locHC[["hc"]])
-    locRowAnnotation <- as.data.frame(
-      dendextend::cutree(tree = locDend, 
-                         k = locNclust))
-    names(locRowAnnotation) = "cluster"
-    
-    # prepend column names with weights from sparcl
-    locColNames = paste0(ifelse(locHC$ws == 0, "",
-                                ifelse(
-                                  locHC$ws <= 0.1,
-                                  "* ",
-                                  ifelse(locHC$ws <= 0.5, "** ", "*** ")
-                                )), colnames(locDM))
-    
-    
-    
-    if (input$selectDend) {
-      locRowv = locDend
-      locDendType = "row"
-    } else {
-      locRowv = FALSE
-      locDendType = "none"
-    }
-    
-    heatmaply(
-      locDM, 
-      Rowv = locRowv,
-      dendrogram = locDendType,
-      trace = "none",
-      colors = locColorHM, 
-      labCol = locColNames,
-      row_side_colors = locRowAnnotation,
-      row_side_palette = locColorDend,
-      grid_color = ifelse(input$chBdispGrid, 
-                          grey(input$slGridColor), 
-                          NA), 
-      na.value = grey(input$slNAcolor),
-      cexCol = input$inFontY * 0.1,
-      cexRow = input$inFontX * 0.1,
-      margins = c(50, 50, 100, 0),
-      xaxis_height = 100,
-      yaxis_width = 100,
-      main = paste(
-        "Distance measure: ",
-        input$selectDist,
-        "\nLinkage method: ",
-        input$selectLinkage
-      )
+    myPlotHeatmaply(
+      locDM,
+      as.dendrogram(locHC[["hc"]]),
+      returnNclust(),
+      myHeatmapOpts(input),
+      in.colLabels = myGetSparColLabels(locHC$ws, colnames(locDM)),
+      in.title = myHeatmapTitle(input$selectDist, input$selectLinkage)
     )
   })
   
