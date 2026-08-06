@@ -93,7 +93,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
                    choices = list("Euclidean" = "squared.distance",
                                   "Manhattan" = "absolute.value"),
                    selected = 1
-                 ),
+                 )
                ),
                
                column(6,
@@ -106,12 +106,12 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
                           "Single"   = "single",
                           "Centroid" = "centroid"
                         ),
-                        selected = 1),
-               ),
+                        selected = 1)
+               )
              )
              # No alert anchor here: sparcl clusters data containing NAs,
              # so this tab intentionally performs no missing-value check.
-      ),
+      )
     ),
     
     br(),
@@ -140,7 +140,7 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
         value = 15,
         step = 1,
         ticks = TRUE
-      ),
+      )
     ),
     
     myHeatmapStyleUI(ns, 'Spectral'),

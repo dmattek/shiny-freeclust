@@ -47,7 +47,7 @@ downPlotUI <- function(id, label = "Download Plot") {
                    min = 1,
                    width = 100
                  )
-        ),
+        )
         
       ),
       column(

@@ -18,7 +18,13 @@ Or open `freeclust.Rproj` in RStudio and click *Run App* from `server.R`/`ui.R`.
 
 Dependencies are auto-installed on startup: `global.R` diffs `required_packages` against `installed.packages()` and calls `install.packages()` on what is missing. When adding a package, add it to that vector *and* to the README install list.
 
-There is no test suite and no linter config. `misc-scripts/testCl.R` is a scratch script for exercising `sparcl` outside Shiny (gitignored, as are `rsconnect/` and `shiny-contest/`). `test-data/` and `example-data/` hold CSVs for manual testing.
+Run the tests from the repository root:
+
+```
+Rscript tests/run-tests.R
+```
+
+`tests/testthat/` covers the `auxfn.R` helpers and drives the histogram module's rescale/trim/clip pipeline through `shiny::testServer`. There is no linter config. `misc-scripts/testCl.R` is a scratch script for exercising `sparcl` outside Shiny (gitignored, as are `rsconnect/` and `shiny-contest/`). `test-data/` and `example-data/` hold CSVs for manual testing.
 
 ## Architecture
 
@@ -60,6 +66,8 @@ Shared constants (ALL-CAPS globals: `MILLIS`, `MAXNCLUST`, `PLOTFONT*`, `SIGNIFD
 - `myGgplotTheme` — the shared ggplot theme; `plotly`/`heatmaply` and `pheatmap` outputs are styled separately.
 
 ### Plot downloads
+
+`modules/heatmapOpts.R` holds the appearance and download controls shared by the two hierarchical tabs (`myHeatmapStyleUI`, `myHeatmapDownloadUI`). Widget ids are fixed there, so both module servers read `input$slNAcolor`, `input$selectPalette` and the rest directly — changing an id in that file silently breaks both tabs.
 
 `modules/downPlot.R` is a nested module invoked from inside other modules — `downPlotUI(ns('downPlotHierPNG'), "")` in the UI, `downPlot("downPlotHierPNG", fnameReactive, plotFn)` in the server. Because of that, plot bodies are written as **plain functions** (e.g. `plotHier()`), not reactives, so they can be both `renderPlot`ed and re-executed inside a `pdf()`/`png()` device. The filename reactive's extension (`.pdf` vs `.png`) selects the device and the button label.
 

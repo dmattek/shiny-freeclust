@@ -77,7 +77,7 @@ fluidPage(
         choices = list('dot .' = '.',
                        'comma ,' = ','),
         selected = '.'
-      ),
+      )
       
       #actionButton("butReset", "Reset file input"),
     ),

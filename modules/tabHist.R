@@ -98,7 +98,7 @@ dataHistUI <- function(id, label = "Histogram") {
              textOutput(ns('dataMin')),
              textOutput(ns('dataMax')),
              textOutput(ns('dataNA'))
-      ),
+      )
     ),
     
     plotOutput(ns('plotHist'), 

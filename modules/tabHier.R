@@ -86,7 +86,7 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                                   "Canberra"  = "canberra",
                                   "DTW" = "DTW"),
                    selected = 1
-                 ),
+                 )
                ),
                
                column(6,
@@ -101,10 +101,10 @@ clustHierUI <- function(id, label = "Hierarchical CLustering") {
                           "Ward"     = "ward.D",
                           "Ward D2"  = "ward.D2",
                           "McQuitty" = "mcquitty"),
-                        selected = 1),
-               ),
+                        selected = 1)
+               )
              ),
-             bsAlert("alertAnchorClHierNAsPresent"),
+             bsAlert("alertAnchorClHierNAsPresent")
       )
     ),
     
