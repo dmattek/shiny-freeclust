@@ -276,7 +276,7 @@ clustHier <- function(id, dataMod) {
   # A dendrogram cannot be cut into more branches than there are samples,
   # so cap the slider at whichever is smaller.
   observe({
-    cat(file = stdout(), 'tabHier:observe:updateSliderInput\n')
+    myDebug('tabHier:observe:updateSliderInput\n')
 
     locDM = dataMod()
 
@@ -291,7 +291,7 @@ clustHier <- function(id, dataMod) {
   # calculate distance matrix for further clustering
   # samples arranged in rows with columns corresponding to measurements/features
   calcDist <- reactive({
-    cat(file = stdout(), 'tabHier:calcDist\n')
+    myDebug('tabHier:calcDist\n')
     
     locDM = dataMod()
     
@@ -334,7 +334,7 @@ clustHier <- function(id, dataMod) {
   })
   
   calcHC <- reactive({
-    cat(file = stdout(), 'tabHier:calcHC\n')
+    myDebug('tabHier:calcHC\n')
     
     locDist = calcDist()
     
@@ -370,9 +370,11 @@ clustHier <- function(id, dataMod) {
     },
     
     content = function(file) {
-      fwrite(x = myGetDataCl(calcHC(), 
-                             input$slNclust), 
-             file = file, 
+      # returnNclust(), not input$slNclust: the plot is drawn from the
+      # debounced value, and the download has to describe the same cut.
+      fwrite(x = myGetDataCl(calcHC(),
+                             returnNclust()),
+             file = file,
              row.names = FALSE)
     }
   )
@@ -398,7 +400,7 @@ clustHier <- function(id, dataMod) {
   # This function is used to plot and to download a pdf
   
   plotHier <- function() {
-    cat(file = stdout(), 'tabHier:plotHier\n')
+    myDebug('tabHier:plotHier\n')
     
     locDM = dataMod()
     locHC <- calcHC()
@@ -432,16 +434,16 @@ clustHier <- function(id, dataMod) {
     # pheatmap accepts direct output from hclust,
     # NOT as.dendrogram(x)
     if (input$selectDend) {
-      assign("var.tmp.1", locHC)
+      locClustRows = locHC
     } else {
-      assign("var.tmp.1", FALSE)
+      locClustRows = FALSE
     }
     
     
     pheatmap::pheatmap(
       locDM,
       color = locColorHM,
-      cluster_rows = var.tmp.1,
+      cluster_rows = locClustRows,
       cluster_cols = FALSE,
       cutree_rows = locNclust,
       annotation_colors = list(cluster = locColorDend),
@@ -484,7 +486,7 @@ clustHier <- function(id, dataMod) {
   
   # Hierarchical clustering - interactive version
   output$outPlotInt <- renderPlotly({
-    cat(file = stdout(), 'tabHier:outPlotInt\n')
+    myDebug('tabHier:outPlotInt\n')
     
     locDM = dataMod()
     locHC = calcHC()
@@ -516,17 +518,17 @@ clustHier <- function(id, dataMod) {
     names(locRowAnnotation) = "cluster"
     
     if (input$selectDend) {
-      assign("var.tmp.1", locDend)
-      var.tmp.2 = "row"
+      locRowv = locDend
+      locDendType = "row"
     } else {
-      assign("var.tmp.1", FALSE)
-      var.tmp.2 = "none"
+      locRowv = FALSE
+      locDendType = "none"
     }
     
     heatmaply(
       locDM, 
-      Rowv = var.tmp.1,
-      dendrogram = var.tmp.2,
+      Rowv = locRowv,
+      dendrogram = locDendType,
       trace = "none",
       colors = locColorHM, 
       row_side_colors = locRowAnnotation,

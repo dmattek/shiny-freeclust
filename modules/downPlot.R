@@ -82,7 +82,7 @@ downPlot <- function(id, in.fname, in.plot, in.gg = FALSE) {
   
   output$downPlot <- downloadHandler(
     filename = function() {
-      cat(in.fname(), "\n")
+      myDebug(in.fname(), "\n")
       in.fname()
     },
     

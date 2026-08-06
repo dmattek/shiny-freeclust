@@ -186,7 +186,7 @@ clustValid <- function(id, inDataWide) {
   # sliders accordingly, and leave them alone when the dataset is too small
   # to support the minimum of two clusters at all.
   observe({
-    cat(file = stdout(), 'clustValid:observe:updateSliderInput\n')
+    myDebug('clustValid:observe:updateSliderInput\n')
 
     locDM = inDataWide()
 
@@ -205,7 +205,7 @@ clustValid <- function(id, inDataWide) {
   # calculate distance matrix for further clustering
   # time series arranged in rows with columns corresponding to time points
   calcDist <- reactive({
-    cat(file = stdout(), 'clustValid:calcDist \n')
+    myDebug('clustValid:calcDist \n')
     
     locDM = inDataWide()
     
@@ -247,7 +247,7 @@ clustValid <- function(id, inDataWide) {
   
   # calculate dendrogram for a chosen number of clusters and the linkage method
   calcDendCut = reactive({
-    cat(file = stdout(), 'clustValid:calcDendCut \n')
+    myDebug('clustValid:calcDendCut \n')
     
     locDist = calcDist()
     
@@ -270,7 +270,7 @@ clustValid <- function(id, inDataWide) {
   
   # plot average silhouette
   plotSilhAvg <- function() {
-    cat(file = stdout(), 'plotSilhAvg: in\n')
+    myDebug('plotSilhAvg: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotRel
@@ -303,7 +303,7 @@ clustValid <- function(id, inDataWide) {
   
   # plot Ws
   plotWss <- function() {
-    cat(file = stdout(), 'plotWss: in\n')
+    myDebug('plotWss: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotRel
@@ -337,7 +337,7 @@ clustValid <- function(id, inDataWide) {
   
   # PCA visualization of partitioning methods 
   plotClPCA <- function() {
-    cat(file = stdout(), 'plotClPCA: in\n')
+    myDebug('plotClPCA: in\n')
 
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
@@ -384,7 +384,7 @@ clustValid <- function(id, inDataWide) {
   
   # plot dendrogram tree
   plotTree <- function() {
-    cat(file = stdout(), 'plotTree: in\n')
+    myDebug('plotTree: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
@@ -430,7 +430,7 @@ clustValid <- function(id, inDataWide) {
   
   # plot silhouettes for a particular dendrogram cut
   plotSilhForCut <- function() {
-    cat(file = stdout(), 'plotSilhForCut: in\n')
+    myDebug('plotSilhForCut: in\n')
     
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
@@ -482,14 +482,6 @@ clustValid <- function(id, inDataWide) {
   
   # Display PCA of clustering
   output$outPlotClPCA <- renderPlot({
-    # This is required to avoid
-    # "Warning: Error in <Anonymous>: cannot open file 'Rplots.pdf'"
-    # When running on a server. Based on:
-    # https://github.com/ropensci/plotly/issues/494
-    # if (names(dev.cur()) != "null device")
-    #   dev.off()
-    # pdf(NULL)
-    
     locP = plotClPCA()
     locP = locP$plot
     if(is.null(locP))
@@ -500,14 +492,6 @@ clustValid <- function(id, inDataWide) {
   
   # Display tree
   output$outPlotTree <- renderPlot({
-    # This is required to avoid
-    # "Warning: Error in <Anonymous>: cannot open file 'Rplots.pdf'"
-    # When running on a server. Based on:
-    # https://github.com/ropensci/plotly/issues/494
-    # if (names(dev.cur()) != "null device")
-    #   dev.off()
-    # pdf(NULL)
-    
     locP = plotTree()
     if(is.null(locP))
       return(NULL)
@@ -517,14 +501,6 @@ clustValid <- function(id, inDataWide) {
   
   # Display silhouette for a dendrogram cut
   output$outPlotSilhForCut <- renderPlot({
-    # This is required to avoid
-    # "Warning: Error in <Anonymous>: cannot open file 'Rplots.pdf'"
-    # When running on a server. Based on:
-    # https://github.com/ropensci/plotly/issues/494
-    # if (names(dev.cur()) != "null device")
-    #   dev.off()
-    # pdf(NULL)
-    
     locP = plotSilhForCut()
     if(is.null(locP))
       return(NULL)

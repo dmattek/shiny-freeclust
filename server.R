@@ -40,13 +40,13 @@ function(input, output, session) {
   # load main data file; 
   # return a matrix with samples as rows, measurements/features as columns
   dataLoad <- eventReactive(input$butDataLoad, {
-    cat("dataLoad\n")
+    myDebug("dataLoad\n")
     locFilePath = input$fileDataLoad$datapath
     
     counter$dataLoad <- input$butDataLoad - 1
     
     if (is.null(locFilePath) || locFilePath == '') {
-      cat("dataLoad: null\n")
+      myDebug("dataLoad: null\n")
 
       createAlert(
         session,
@@ -61,7 +61,7 @@ function(input, output, session) {
       return(NULL)
     }
     else {
-      cat("dataLoad: read\n")
+      myDebug("dataLoad: read\n")
 
       closeAlert(session, "alertDataLoadNoFile")
 
@@ -84,7 +84,7 @@ function(input, output, session) {
       locBadCols = names(locDT)[!vapply(locDT, is.numeric, logical(1))]
 
       if (length(locBadCols) > 0) {
-        cat("dataLoad: non-numeric columns\n")
+        myDebug("dataLoad: non-numeric columns\n")
 
         locBadColsTxt = paste(head(locBadCols, 5), collapse = ", ")
         if (length(locBadCols) > 5)
@@ -116,7 +116,7 @@ function(input, output, session) {
       locDupIDs = unique(loc1stColVal[duplicated(loc1stColVal)])
 
       if (length(locDupIDs) > 0) {
-        cat("dataLoad: duplicated sample names\n")
+        myDebug("dataLoad: duplicated sample names\n")
 
         locDupIDsTxt = paste(head(locDupIDs, 5), collapse = ", ")
         if (length(locDupIDs) > 5)
@@ -160,7 +160,7 @@ function(input, output, session) {
     locInGen1 = input$butDataGen1
     locInDataLoad = input$butDataLoad
     
-    cat(
+    myDebug(
       "dataInBoth\ninGen1: ",
       locInGen1,
       "   prev=",
@@ -175,7 +175,7 @@ function(input, output, session) {
     # isolate the checks of counter reactiveValues
     # as we set the values in this same reactive
     if (locInGen1 != isolate(counter$dataGen1)) {
-      cat("dataInBoth: inDataGen1\n")
+      myDebug("dataInBoth: inDataGen1\n")
       dm = myUserDataGenIris()
       # complaints about a previously loaded file do not apply to this data
       for (locAlertId in c("alertDataLoadNoFile",
@@ -185,12 +185,12 @@ function(input, output, session) {
       # no need to isolate updating the counter reactive values!
       counter$dataGen1 <- locInGen1
     } else if (locInDataLoad != isolate(counter$dataLoad)) {
-      cat("dataInBoth: inDataLoad\n")
+      myDebug("dataInBoth: inDataLoad\n")
       dm = dataLoad()
       # no need to isolate updating the counter reactive values!
       counter$dataLoad <- locInDataLoad
     } else {
-      cat("dataInBoth: else\n")
+      myDebug("dataInBoth: else\n")
       dm = NULL
     }
     return(dm)
@@ -198,7 +198,7 @@ function(input, output, session) {
   
   # return dt modified according to UI
   dataMod <- reactive({
-    cat(file = stdout(), 'dataMod\n')
+    myDebug('dataMod\n')
     loc.dm = dataInBoth()
     
     if (is.null(loc.dm))

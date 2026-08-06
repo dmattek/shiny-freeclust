@@ -300,7 +300,7 @@ clustHierSpar <- function(id, dataMod) {
   # A dendrogram cannot be cut into more branches than there are samples,
   # so cap the slider at whichever is smaller.
   observe({
-    cat(file = stdout(), 'tabHierSpar:observe:updateSliderInput\n')
+    myDebug('tabHierSpar:observe:updateSliderInput\n')
 
     locDM = dataMod()
 
@@ -321,13 +321,13 @@ clustHierSpar <- function(id, dataMod) {
   # data changes - including a rescale or a trim applied in the Histogram tab -
   # so that a dendrogram is never drawn over values it did not come from.
   observeEvent(dataMod(), {
-    cat(file = stdout(), 'tabHierSpar:observeEvent:dataMod\n')
+    myDebug('tabHierSpar:observeEvent:dataMod\n')
 
     locClustRes(NULL)
   }, ignoreNULL = FALSE)
 
   observeEvent(input$butCluster, {
-    cat(file = stdout(), 'tabHierSpar:observeEvent:butCluster\n')
+    myDebug('tabHierSpar:observeEvent:butCluster\n')
 
     locDM = dataMod()
 
@@ -360,14 +360,14 @@ clustHierSpar <- function(id, dataMod) {
   })
 
   calcHierSpar <- reactive({
-    cat(file = stdout(), 'tabHierSpar:calcHierSpar\n')
+    myDebug('tabHierSpar:calcHierSpar\n')
 
     return(locClustRes())
   })
   
   
   calcDend <- reactive({
-    cat(file = stdout(), 'tabHierSpar:calcDend\n')
+    myDebug('tabHierSpar:calcDend\n')
     
     loc.hc = calcHierSpar()
     if (is.null(loc.hc))
@@ -382,7 +382,7 @@ clustHierSpar <- function(id, dataMod) {
   # used when saving cluster associations in sparse hierarchical
   # sparsehc doesn't return original rownames after clustering
   getDataIDs <- reactive({
-    cat(file = stdout(), 'tabHierSpar:getDataIDs\n')
+    myDebug('tabHierSpar:getDataIDs\n')
     loc.m = dataMod()
     
     if (is.null(loc.m))
@@ -401,10 +401,12 @@ clustHierSpar <- function(id, dataMod) {
     },
     
     content = function(file) {
-      fwrite(x = myGetDataClSpar(calcDend(), 
-                                 input$slNclust, 
-                                 getDataIDs()), 
-             file = file, 
+      # returnNclust(), not input$slNclust: the plot is drawn from the
+      # debounced value, and the download has to describe the same cut.
+      fwrite(x = myGetDataClSpar(calcDend(),
+                                 returnNclust(),
+                                 getDataIDs()),
+             file = file,
              row.names = FALSE)
     }
   )
@@ -429,7 +431,7 @@ clustHierSpar <- function(id, dataMod) {
   # This function is used to plot and to downoad a pdf
 
   plotHierSpar <- function() {
-    cat(file = stdout(), 'tabHierSpar:plotHierSpar\n')
+    myDebug('tabHierSpar:plotHierSpar\n')
     
     locDM = dataMod()
     locHC = calcHierSpar()
@@ -474,16 +476,16 @@ clustHierSpar <- function(id, dataMod) {
     # pheatmap accepts direct output from hclust,
     # NOT as.dendrogram(x)
     if (input$selectDend) {
-      assign("locVarTmp1", locHC[["hc"]])
+      locClustRows = locHC[["hc"]]
     } else {
-      assign("locVarTmp1", FALSE)
+      locClustRows = FALSE
     }
     
     
     pheatmap::pheatmap(
       locDM,
       color = locColorHM,
-      cluster_rows = locVarTmp1,
+      cluster_rows = locClustRows,
       cluster_cols = FALSE,
       cutree_rows = locNclust,
       annotation_row = locRowAnnotation,
@@ -530,7 +532,7 @@ clustHierSpar <- function(id, dataMod) {
   
   # Sparse Hierarchical clustering (sparcl) interactive version
   output$outPlotInt <- renderPlotly({
-    cat(file = stdout(), 'tabHierSpar:outPlotInt\n')
+    myDebug('tabHierSpar:outPlotInt\n')
     
     locDM = dataMod()
     locHC = calcHierSpar()
@@ -572,17 +574,17 @@ clustHierSpar <- function(id, dataMod) {
     
     
     if (input$selectDend) {
-      assign("var.tmp.1", locDend)
-      var.tmp.2 = "row"
+      locRowv = locDend
+      locDendType = "row"
     } else {
-      assign("var.tmp.1", FALSE)
-      var.tmp.2 = "none"
+      locRowv = FALSE
+      locDendType = "none"
     }
     
     heatmaply(
       locDM, 
-      Rowv = var.tmp.1,
-      dendrogram = var.tmp.2,
+      Rowv = locRowv,
+      dendrogram = locDendType,
       trace = "none",
       colors = locColorHM, 
       labCol = locColNames,

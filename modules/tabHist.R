@@ -180,7 +180,7 @@ dataHist <- function(id, inDataMod) {
 
   # Dynamic UI ----
   output$dataMin <- renderText({
-    cat(file = stdout(), 'tabHist:dataMin\n')
+    myDebug('tabHist:dataMin\n')
     
     loc.extr = calcDataMin()
     
@@ -200,7 +200,7 @@ dataHist <- function(id, inDataMod) {
   })
   
   output$dataMax <- renderText({
-    cat(file = stdout(), 'tabHist:dataMax\n')
+    myDebug('tabHist:dataMax\n')
     
     loc.extr = calcDataMax()
     
@@ -216,7 +216,7 @@ dataHist <- function(id, inDataMod) {
   })
 
   output$dataNA <- renderText({
-    cat(file = stdout(), 'tabHist:dataNA\n')
+    myDebug('tabHist:dataNA\n')
     
     locX = calcDataNA()
     
@@ -230,7 +230,7 @@ dataHist <- function(id, inDataMod) {
   # Set min/max numeric inputs for trimming and clipping to 
   # min/max values in the data
   observe({
-    cat(file = stdout(), 'tabHist:observe:updateNumericInput\n')
+    myDebug('tabHist:observe:updateNumericInput\n')
     
     locMin = calcDataMin()
     locMax = calcDataMax()
@@ -259,7 +259,7 @@ dataHist <- function(id, inDataMod) {
   
   # Reset min/max input fields for trimming
   observeEvent(input$butDataTrimReset, {
-    cat(file = stdout(), 'tabHist:observeEvent:updateNumericInput\n')
+    myDebug('tabHist:observeEvent:updateNumericInput\n')
     
     locMin = calcDataMin()
     locMax = calcDataMax()
@@ -280,7 +280,7 @@ dataHist <- function(id, inDataMod) {
   
   # Reset min/max input fields for clipping
   observeEvent(input$butDataClipReset, {
-    cat(file = stdout(), 'tabHist:observeEvent:updateNumericInput\n')
+    myDebug('tabHist:observeEvent:updateNumericInput\n')
     
     locMin = calcDataMin()
     locMax = calcDataMax()
@@ -303,24 +303,24 @@ dataHist <- function(id, inDataMod) {
   
   # Calculate min/max of data
   calcDataMin = reactive({
-    cat(file = stdout(), 'tabHist:calcDataMin\n')
+    myDebug('tabHist:calcDataMin\n')
     
     locDM = rescaledData()
     
     if (!is.null(locDM)) {
-      locX = myMin(locDM, sig = SIGNIFDIGITSROUND, na.rm = T)
+      locX = myMin(locDM, in.dec = DECPLACESROUND, na.rm = T)
     } else {
       return(NULL)
     }
   })
   
   calcDataMax = reactive({
-    cat(file = stdout(), 'tabHist:calcDataMax\n')
+    myDebug('tabHist:calcDataMax\n')
     
     locDM = rescaledData()
     
     if (!is.null(locDM)) {
-      locX = myMax(locDM, sig = SIGNIFDIGITSROUND, na.rm = T)
+      locX = myMax(locDM, in.dec = DECPLACESROUND, na.rm = T)
     } else {
       return(NULL)
     }
@@ -328,7 +328,7 @@ dataHist <- function(id, inDataMod) {
   
   
   calcDataNA = reactive({
-    cat(file = stdout(), 'tabHist:calcDataNA\n')
+    myDebug('tabHist:calcDataNA\n')
     
     locDM = rescaledData()
     
@@ -341,7 +341,7 @@ dataHist <- function(id, inDataMod) {
   
   # apply rescaling methods
   rescaledData = reactive({
-    cat(file = stdout(), 'tabHist:rescaledData\n')
+    myDebug('tabHist:rescaledData\n')
     
     locDM = inDataMod()
     
@@ -410,7 +410,7 @@ dataHist <- function(id, inDataMod) {
   # apply data filters from UI (clipping, trimming)
   # return it to other modules
   dmReturn = reactive({ 
-    cat(file = stdout(), 'tabHist:dmReturn\n')
+    myDebug('tabHist:dmReturn\n')
     
     locDM = rescaledData()
     
@@ -455,7 +455,7 @@ dataHist <- function(id, inDataMod) {
   
   # Read the number of bins from the slider with a delay
   giveMeNbins = reactive({
-    cat(file = stdout(), 'tabHist:giveMeNbins\n')
+    myDebug('tabHist:giveMeNbins\n')
     
     locNbins = input$slHistBinN
     
@@ -463,7 +463,7 @@ dataHist <- function(id, inDataMod) {
   }) %>% debounce(millis = MILLIS)
   
   output$plotHist <- renderPlot({
-    cat(file = stdout(), 'tabHist:plotHist\n')
+    myDebug('tabHist:plotHist\n')
     
     locDM = rescaledData()
     

@@ -11,14 +11,22 @@
 # used to delay output from sliders
 MILLIS = 1000
 
-# Number of significant digits to display in table stats
-SIGNIFDIGITSINTAB = 3
-
-# Number of significant digits used to truncate min/max
-SIGNIFDIGITSROUND = 4
+# Number of decimal places used to truncate min/max.
+# Decimal places, not significant digits, despite what the old name claimed.
+DECPLACESROUND = 4
 
 # if true, additional output printed to R console
 DEB = T
+
+# Print a tracing line to the console, but only when DEB is set. Every reactive
+# in the app announces itself this way; on a server those lines all end up in
+# the log, so the switch has to actually reach them.
+myDebug = function(...) {
+  if (DEB)
+    cat(file = stdout(), ...)
+
+  return(invisible(NULL))
+}
 
 # font sizes in pts for screen display
 PLOTFONTBASE = 16
@@ -119,36 +127,31 @@ myWithSeed = function(in.expr, in.seed = SEEDRNG) {
   return(in.expr)
 }
 
-# Calculate minimum of x and floor the result to sig significant digits
-myMin = function(x, sig = 4, na.rm = T) {
+# Calculate minimum of x, rounded down to in.dec decimal places.
+# Note this is decimal places, not significant digits: the result of
+# myMin(x, 4) keeps four digits after the point regardless of magnitude.
+myMin = function(x, in.dec = 4, na.rm = T) {
   locX = min(x, na.rm = na.rm)
-  
-  return(floor(locX * 10^sig) / (10^sig))
+
+  return(floor(locX * 10^in.dec) / (10^in.dec))
 }
 
-# Calculate maximum of x and ceil the result to sig significant digits
-myMax = function(x, sig = 4, na.rm = T) {
+# Calculate maximum of x, rounded up to in.dec decimal places.
+# See the note on myMin: these are decimal places, not significant digits.
+myMax = function(x, in.dec = 4, na.rm = T) {
   locX = max(x, na.rm = na.rm)
-  
-  return(ceiling(locX * 10^sig) / (10^sig))
+
+  return(ceiling(locX * 10^in.dec) / (10^in.dec))
 }
 
 
-# From: https://www.r-bloggers.com/winsorization/
-myWinsor1 <- 
-function (x, fraction=.05)
-{
-  if(length(fraction) != 1 || fraction < 0 ||
-     fraction > 0.5) {
-    stop("bad value for 'fraction'")
-  }
-  lim <- quantile(x, probs=c(fraction, 1-fraction))
-  x[ x < lim[1] ] <- lim[1]
-  x[ x > lim[2] ] <- lim[2]
-  x
-}
-
-
+# Winsorize by a robust spread: values further from the median than
+# multiple * MAD are pulled back to that limit.
+#
+# Note that this works on the matrix as a whole, using one median and one MAD
+# for every value in it, whereas the z-score option in the histogram tab
+# rescales each feature separately. The two rescalings therefore differ in
+# more than the statistic they use.
 myWinsor2 <- function (x, multiple=3)
 {
   if(length(multiple) != 1 || multiple <= 0) {
@@ -160,25 +163,6 @@ myWinsor2 <- function (x, multiple=3)
   y[ y > sc ] <- sc
   y[ y < -sc ] <- -sc
   y + med
-}
-
-# Generate random dataset for testing.
-# Consists of 20 samples (A01-A10, B01-B10) and 20 measurements (A-T).
-# Only first measurement, A, differs.
-# Should generate two clusters.
-
-myUserDataGen <- function() {
-  require("MASS")
-  cat(file = stdout(), 'generate data \n')
-  # assign result to shared 'dataIn' variable
-  loc.x <-
-    rbind(mvrnorm(10, c(0, 0), matrix(c(1, 0.9, 0.9, 1), 2, 2)),  
-          mvrnorm(10, c(4, 0), matrix(c(1,-0.9,-0.9, 1), 2, 2)))
-  loc.x <- cbind(loc.x, matrix(rnorm(20 * 18), 20, 18))
-  rownames(loc.x) = c(paste("A", sprintf("%02d", 1:10), sep = ""), paste("B", sprintf("%02d", 1:10), sep = ""))
-  colnames(loc.x) =  LETTERS[1:20]
-  
-  return(loc.x)
 }
 
 # Generate iris dataset for testing
@@ -202,7 +186,7 @@ myUserDataGenIris = function() {
 
 myGetDataCl = function(in.dend, in.k) {
   require(data.table)
-  cat(file = stdout(), 'getDataCl \n')
+  myDebug('getDataCl \n')
   
   if (is.null(in.dend))
     return(NULL)
@@ -235,7 +219,7 @@ myGetDataCl = function(in.dend, in.k) {
 
 myGetDataClSpar = function(in.dend, in.k, in.id) {
   require(data.table)
-  cat(file = stdout(), 'getDataClSpar \n')
+  myDebug('getDataClSpar \n')
   
   if (is.null(in.dend))
     return(NULL)
