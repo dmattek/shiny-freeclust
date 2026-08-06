@@ -267,11 +267,26 @@ clustHier <- function(id, dataMod) {
 
   ns <- session$ns
 
-  # Return the number of clusters from the slider 
+  # Return the number of clusters from the slider
   # and delay by a constant in milliseconds defined in auxfunc.R
   returnNclust = reactive({
     return(input$slNclust)
   }) %>% debounce(MILLIS)
+
+  # A dendrogram cannot be cut into more branches than there are samples,
+  # so cap the slider at whichever is smaller.
+  observe({
+    cat(file = stdout(), 'tabHier:observe:updateSliderInput\n')
+
+    locDM = dataMod()
+
+    if (is.null(locDM))
+      return(NULL)
+
+    updateSliderInput(session,
+                      'slNclust',
+                      max = min(MAXNCLUST, nrow(locDM)))
+  })
   
   # calculate distance matrix for further clustering
   # samples arranged in rows with columns corresponding to measurements/features

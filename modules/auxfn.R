@@ -93,7 +93,31 @@ l.col.pal.dend = list(
   "Seattle Grays 5" = 'Seattle Grays'
 )
 
+# Seed used wherever a result has to be reproducible between runs
+SEEDRNG = 123
+
 ## Data processing ----
+
+# Evaluate an expression under a fixed RNG seed and put the caller's random
+# number state back as it was found. Randomised steps in the app should give
+# the same answer twice, but the app has no business dictating the RNG state
+# of the R session hosting it.
+#
+# Arguments:
+# in.expr - expression to evaluate; lazily evaluated, so it runs seeded
+# in.seed - seed to apply
+
+myWithSeed = function(in.expr, in.seed = SEEDRNG) {
+  if (exists(".Random.seed", envir = .GlobalEnv)) {
+    locOldSeed = get(".Random.seed", envir = .GlobalEnv)
+    on.exit(assign(".Random.seed", locOldSeed, envir = .GlobalEnv),
+            add = TRUE)
+  }
+
+  set.seed(in.seed)
+
+  return(in.expr)
+}
 
 # Calculate minimum of x and floor the result to sig significant digits
 myMin = function(x, sig = 4, na.rm = T) {
@@ -322,8 +346,18 @@ myNbclust <-
             print.summary = TRUE,
             ...)
   {
-    set.seed(123)
-    
+    # Inherited from factoextra::fviz_nbclust, where the seed matters because
+    # FUNcluster may be kmeans. Here FUNcluster is the deterministic myHcut,
+    # so this only guards against a randomised FUNcluster being passed in;
+    # either way it must not leak into the caller's RNG state.
+    if (exists(".Random.seed", envir = .GlobalEnv)) {
+      locOldSeed = get(".Random.seed", envir = .GlobalEnv)
+      on.exit(assign(".Random.seed", locOldSeed, envir = .GlobalEnv),
+              add = TRUE)
+    }
+
+    set.seed(SEEDRNG)
+
     if (k.max < 2)
       stop("k.max must bet > = 2")
     

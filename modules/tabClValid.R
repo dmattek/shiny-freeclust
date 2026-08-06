@@ -175,11 +175,32 @@ clustValid <- function(id, inDataWide) {
     return(input$slClValidNclust)
   }) %>% debounce(MILLIS)
   
-  # Return max number of clusters from the slider 
+  # Return max number of clusters from the slider
   # and delay by a constant in milliseconds defined in auxfunc.R
   returnMaxNclust = reactive({
     return(input$slClValidMaxClust)
   }) %>% debounce(MILLIS)
+
+  # Validation needs strictly fewer clusters than samples: at k = n every
+  # cluster holds one sample and the silhouette is degenerate. Cap both
+  # sliders accordingly, and leave them alone when the dataset is too small
+  # to support the minimum of two clusters at all.
+  observe({
+    cat(file = stdout(), 'clustValid:observe:updateSliderInput\n')
+
+    locDM = inDataWide()
+
+    if (is.null(locDM))
+      return(NULL)
+
+    locMax = min(MAXNCLUST, nrow(locDM) - 1)
+
+    if (locMax < 2)
+      return(NULL)
+
+    updateSliderInput(session, 'slClValidNclust',   max = locMax)
+    updateSliderInput(session, 'slClValidMaxClust', max = locMax)
+  })
   
   # calculate distance matrix for further clustering
   # time series arranged in rows with columns corresponding to time points

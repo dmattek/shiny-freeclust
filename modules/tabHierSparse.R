@@ -296,6 +296,21 @@ clustHierSpar <- function(id, dataMod) {
   returnNclust = reactive({
     return(input$slNclust)
   }) %>% debounce(MILLIS)
+
+  # A dendrogram cannot be cut into more branches than there are samples,
+  # so cap the slider at whichever is smaller.
+  observe({
+    cat(file = stdout(), 'tabHierSpar:observe:updateSliderInput\n')
+
+    locDM = dataMod()
+
+    if (is.null(locDM))
+      return(NULL)
+
+    updateSliderInput(session,
+                      'slNclust',
+                      max = min(MAXNCLUST, nrow(locDM)))
+  })
   
   # Permuting is by far the slowest computation in the app, and it depends on
   # four inputs, so leaving it reactive means a full re-run on every parameter
@@ -321,20 +336,25 @@ clustHierSpar <- function(id, dataMod) {
       return(NULL)
     }
 
-    perm.out <- HierarchicalSparseCluster.permute(
-      locDM,
-      wbounds = NULL,
-      nperms = input$inHierSparNperms,
-      dissimilarity = input$selectDist
-    )
+    # The permutation step is randomised, so the same data and settings would
+    # otherwise give a different answer on every click. Seed it, and restore
+    # the session's RNG state afterwards.
+    sparsehc <- myWithSeed({
+      perm.out <- HierarchicalSparseCluster.permute(
+        locDM,
+        wbounds = NULL,
+        nperms = input$inHierSparNperms,
+        dissimilarity = input$selectDist
+      )
 
-    sparsehc <- HierarchicalSparseCluster(
-      dists = perm.out$dists,
-      wbound = perm.out$bestw,
-      niter = input$inHierSparNiter,
-      method = input$selectLinkage,
-      dissimilarity = input$selectDist
-    )
+      HierarchicalSparseCluster(
+        dists = perm.out$dists,
+        wbound = perm.out$bestw,
+        niter = input$inHierSparNiter,
+        method = input$selectLinkage,
+        dissimilarity = input$selectDist
+      )
+    })
 
     locClustRes(sparsehc)
   })

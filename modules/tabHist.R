@@ -420,19 +420,34 @@ dataHist <- function(id, inDataMod) {
     
     # Data trimming
     # Data points outside of the range are set to NA.
+    # An empty numeric field arrives as NA and is treated as "no bound on that
+    # side"; comparing against it would otherwise quietly match nothing, and
+    # the checkbox would claim to trim data that it left untouched.
     if (input$chBdataTrim) {
-      locDM[locDM < as.numeric(input$inDataTrimMin)] = NA
-      locDM[locDM > as.numeric(input$inDataTrimMax)] = NA
+      locTrimMin = as.numeric(input$inDataTrimMin)
+      locTrimMax = as.numeric(input$inDataTrimMax)
+
+      if (!is.na(locTrimMin))
+        locDM[locDM < locTrimMin] = NA
+
+      if (!is.na(locTrimMax))
+        locDM[locDM > locTrimMax] = NA
     }
-    
-    
+
+
     # Data clipping
     # Data points outside of the range are set to range limits.
     if (input$chBdataClip) {
-      locDM[locDM < as.numeric(input$inDataClipMin)] = input$inDataClipMin
-      locDM[locDM > as.numeric(input$inDataClipMax)] = input$inDataClipMax
+      locClipMin = as.numeric(input$inDataClipMin)
+      locClipMax = as.numeric(input$inDataClipMax)
+
+      if (!is.na(locClipMin))
+        locDM[locDM < locClipMin] = locClipMin
+
+      if (!is.na(locClipMax))
+        locDM[locDM > locClipMax] = locClipMax
     }
-    
+
     return(locDM)
   })
   
