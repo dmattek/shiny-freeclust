@@ -57,7 +57,16 @@ helpText.server = c(
     "<li><i>Column values separated by</i> - the wrong separator leaves whole ",
     "rows in a single column.</li>",
     "<li><i>Decimal point</i> - a comma read as a dot, or the reverse, turns ",
-    "numbers into text.</li>")
+    "numbers into text.</li>"),
+  alertDataLoadNoFile = paste0(
+    "<p>No file chosen.</p>",
+    "<p>Pick a CSV file with <i>Browse</i> above, then click <i>Load Data</i>. ",
+    "To try the app without a file of your own, click <i>Synthetic data</i>.</p>"),
+  alertDataLoadDupIDs = paste0(
+    "<p>These names appear more than once in the first column: <b>%s</b>.</p>",
+    "<p>A suffix was appended to make them unique, so that <i>ctrl</i> repeated ",
+    "twice becomes <i>ctrl</i> and <i>ctrl.1</i>. Every row is kept and the ",
+    "clustering is unaffected; only the labels in the heatmap change.</p>")
 )
 
 # list of palettes for the heatmap

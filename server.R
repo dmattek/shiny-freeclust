@@ -47,11 +47,24 @@ shinyServer(function(input, output, session) {
     
     if (is.null(locFilePath) || locFilePath == '') {
       cat("dataLoad: null\n")
+
+      createAlert(
+        session,
+        "alertAnchorDataLoad",
+        "alertDataLoadNoFile",
+        title = "No file to load",
+        content = helpText.server[["alertDataLoadNoFile"]],
+        append = FALSE,
+        style = "danger"
+      )
+
       return(NULL)
     }
     else {
       cat("dataLoad: read\n")
-      
+
+      closeAlert(session, "alertDataLoadNoFile")
+
       locDT = fread(
         locFilePath,
         na.strings = input$rButDataNA,
@@ -96,6 +109,38 @@ shinyServer(function(input, output, session) {
 
       closeAlert(session, "alertDataLoadNotNumeric")
 
+      # Sample names have to be unique: the clustering itself copes with
+      # repeated names, but building the heatmap's row annotation from them
+      # fails outright with "duplicate 'row.names' are not allowed".
+      # Keep every row and disambiguate the names instead of refusing the file.
+      locDupIDs = unique(loc1stColVal[duplicated(loc1stColVal)])
+
+      if (length(locDupIDs) > 0) {
+        cat("dataLoad: duplicated sample names\n")
+
+        locDupIDsTxt = paste(head(locDupIDs, 5), collapse = ", ")
+        if (length(locDupIDs) > 5)
+          locDupIDsTxt = paste0(locDupIDsTxt,
+                                ", and ",
+                                length(locDupIDs) - 5,
+                                " more")
+
+        createAlert(
+          session,
+          "alertAnchorDataLoad",
+          "alertDataLoadDupIDs",
+          title = "Duplicated sample names",
+          content = sprintf(helpText.server[["alertDataLoadDupIDs"]],
+                            locDupIDsTxt),
+          append = FALSE,
+          style = "warning"
+        )
+
+        loc1stColVal = make.unique(as.character(loc1stColVal))
+      } else {
+        closeAlert(session, "alertDataLoadDupIDs")
+      }
+
       locDM = as.matrix(locDT)
       rownames(locDM) = loc1stColVal
 
@@ -132,8 +177,11 @@ shinyServer(function(input, output, session) {
     if (locInGen1 != isolate(counter$dataGen1)) {
       cat("dataInBoth: inDataGen1\n")
       dm = myUserDataGenIris()
-      # a complaint about a previously loaded file does not apply to this data
-      closeAlert(session, "alertDataLoadNotNumeric")
+      # complaints about a previously loaded file do not apply to this data
+      for (locAlertId in c("alertDataLoadNoFile",
+                           "alertDataLoadNotNumeric",
+                           "alertDataLoadDupIDs"))
+        closeAlert(session, locAlertId)
       # no need to isolate updating the counter reactive values!
       counter$dataGen1 <- locInGen1
     } else if (locInDataLoad != isolate(counter$dataLoad)) {
