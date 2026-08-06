@@ -22,29 +22,22 @@ options(spinner.color="#00A8AA")
 function(input, output, session) {
   #useShinyjs()
   
-  # This is only set at session start
-  # we use this as a way to determine which input was
-  # clicked in the dataInBoth reactive
-  counter <- reactiveValues(
-    # The value of inDataGen1,2 actionButton is the number of times they were pressed
-    dataGen1 = isolate(input$butDataGen1),
-    dataLoad = isolate(input$butDataLoad)
-  )
-  
   # This button will reset the inFileDataLoad
   # observeEvent(input$butReset, {
   #   shinyjs::reset("fileDataLoad")  # reset is a shinyjs function
   # })
-  
+
   ## Load data ----
-  # load main data file; 
-  # return a matrix with samples as rows, measurements/features as columns
-  dataLoad <- eventReactive(input$butDataLoad, {
-    myDebug("dataLoad\n")
+  # Read the file named in the file input and return a matrix with samples as
+  # rows and measurements/features as columns, or NULL if it cannot be used,
+  # having raised an alert saying why.
+  #
+  # A plain function rather than a reactive: the observer below decides when a
+  # load happens, so this only has to perform one.
+  loadDataFile <- function() {
+    myDebug("loadDataFile\n")
     locFilePath = input$fileDataLoad$datapath
-    
-    counter$dataLoad <- input$butDataLoad - 1
-    
+
     if (is.null(locFilePath) || locFilePath == '') {
       myDebug("dataLoad: null\n")
 
@@ -146,73 +139,52 @@ function(input, output, session) {
 
       return(locDM)
     }
-  })
-  
+  }
+
   ## Prepare data ----
-  dataInBoth <- reactive({
-    # Without direct references to inDataGen1,2 and inFileLoad, inDataGen2
-    #    does not trigger running this reactive once inDataGen1 is used.
-    # This is one of the more nuanced areas of reactive programming in shiny
-    #    due to the if else logic, it isn't fetched once inDataGen1 is available
-    # The morale is use direct retrieval of inputs to guarantee they are available
-    #    for if else logic checks!
-    
-    locInGen1 = input$butDataGen1
-    locInDataLoad = input$butDataLoad
-    
-    myDebug(
-      "dataInBoth\ninGen1: ",
-      locInGen1,
-      "   prev=",
-      isolate(counter$dataGen1),
-      "\ninDataNuc: ",
-      locInDataLoad,
-      "   prev=",
-      isolate(counter$dataLoad),
-      "\n"
-    )
-    
-    # isolate the checks of counter reactiveValues
-    # as we set the values in this same reactive
-    if (locInGen1 != isolate(counter$dataGen1)) {
-      myDebug("dataInBoth: inDataGen1\n")
-      dm = myUserDataGenIris()
-      # complaints about a previously loaded file do not apply to this data
-      for (locAlertId in c("alertDataLoadNoFile",
-                           "alertDataLoadNotNumeric",
-                           "alertDataLoadDupIDs"))
-        closeAlert(session, locAlertId)
-      # no need to isolate updating the counter reactive values!
-      counter$dataGen1 <- locInGen1
-    } else if (locInDataLoad != isolate(counter$dataLoad)) {
-      myDebug("dataInBoth: inDataLoad\n")
-      dm = dataLoad()
-      # no need to isolate updating the counter reactive values!
-      counter$dataLoad <- locInDataLoad
-    } else {
-      myDebug("dataInBoth: else\n")
-      dm = NULL
-    }
-    return(dm)
+
+  # The dataset in play, whichever of the two sources produced it last.
+  # Both write here, so "the most recent click wins" needs no bookkeeping:
+  # each source only has to say what it loaded, and when.
+  dataIn <- reactiveVal(NULL)
+
+  observeEvent(input$butDataGen1, {
+    myDebug("dataIn: synthetic\n")
+
+    # complaints about a previously loaded file do not apply to this data
+    for (locAlertId in c("alertDataLoadNoFile",
+                         "alertDataLoadNotNumeric",
+                         "alertDataLoadDupIDs"))
+      closeAlert(session, locAlertId)
+
+    dataIn(myUserDataGenIris())
+  })
+
+  observeEvent(input$butDataLoad, {
+    myDebug("dataIn: file\n")
+
+    # NULL when the file could not be used; loadDataFile has said why
+    dataIn(loadDataFile())
   })
   
   # return dt modified according to UI
   dataMod <- reactive({
     myDebug('dataMod\n')
-    loc.dm = dataInBoth()
-    
-    if (is.null(loc.dm))
+
+    locDM = dataIn()
+
+    if (is.null(locDM))
       return(NULL)
-    
-    if(input$rBflipRowCol == "col") {
+
+    if (input$rBflipRowCol == "col") {
       # work with data matrix, where:
       # row - categories/features
       # columns - samples
-      
-      loc.dm = t(loc.dm)
+
+      locDM = t(locDM)
     }
-    
-    return(loc.dm)
+
+    return(locDM)
   })
   
   ## Modules ----
