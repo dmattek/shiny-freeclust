@@ -46,7 +46,18 @@ helpText.server = c(
   alDataFormat =  paste0(
     "<p>Accepts a CSV text file in wide format. ",
     "First row should contain sample names; first column should contain feature/measurement names. ",
-    "Or vice versa. Rows/columns can be flipped in the UI.</p>")
+    "Or vice versa. Rows/columns can be flipped in the UI.</p>"),
+  alertDataLoadNotNumeric = paste0(
+    "<p>The following columns do not contain numbers: <b>%s</b>.</p>",
+    "<p>Every column except the first one, which holds sample or feature names, ",
+    "has to be numeric. If the file does look numeric, one of the settings on the ",
+    "left does not match it:</p>",
+    "<li><i>Missing values represented by</i> - a marker such as a dash that is ",
+    "not declared here is read as text.</li>",
+    "<li><i>Column values separated by</i> - the wrong separator leaves whole ",
+    "rows in a single column.</li>",
+    "<li><i>Decimal point</i> - a comma read as a dot, or the reverse, turns ",
+    "numbers into text.</li>")
 )
 
 # list of palettes for the heatmap
@@ -377,7 +388,7 @@ myGgplotTheme = function(in.font.base = 12,
       panel.grid.minor = element_blank(),
       panel.grid.major = element_blank(),
       panel.border = element_blank(),
-      axis.line = element_line(color = "black", size = 0.25),
+      axis.line = element_line(color = "black", linewidth = 0.25),
       axis.text = element_text(size = in.font.axis.text),
       axis.title = element_text(size = in.font.axis.title),
       strip.text = element_text(size = in.font.strip, face = "bold"),

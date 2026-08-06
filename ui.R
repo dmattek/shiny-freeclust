@@ -29,14 +29,16 @@ shinyUI(fluidPage(
       actionButton("butDataLoad",  'Load Data'),
       
       actionButton("butDataGen1", 'Synthetic data'),
-      bsTooltip("butDataGen1", 
+      bsTooltip("butDataGen1",
                 "Use classic iris dataset for testing.",
                 placement = "top",
                 trigger = "hover"),
 
       br(),
       br(),
-      
+
+      bsAlert("alertAnchorDataLoad"),
+
       radioButtons(
         "rBflipRowCol",
         "Samples in:",

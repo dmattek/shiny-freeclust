@@ -64,10 +64,42 @@ shinyServer(function(input, output, session) {
       loc1stColVal  = loc1stCol[[loc1stColName]]
       locDT[, (loc1stColName) := NULL]
 
+      # Every remaining column should hold numeric measurements.
+      # A single text column would turn the entire matrix into a character one
+      # in as.matrix below, which only surfaces much later as an opaque
+      # "'x' must be numeric" from the histogram or the distance calculation.
+      locBadCols = names(locDT)[!vapply(locDT, is.numeric, logical(1))]
+
+      if (length(locBadCols) > 0) {
+        cat("dataLoad: non-numeric columns\n")
+
+        locBadColsTxt = paste(head(locBadCols, 5), collapse = ", ")
+        if (length(locBadCols) > 5)
+          locBadColsTxt = paste0(locBadColsTxt,
+                                 ", and ",
+                                 length(locBadCols) - 5,
+                                 " more")
+
+        createAlert(
+          session,
+          "alertAnchorDataLoad",
+          "alertDataLoadNotNumeric",
+          title = "Cannot read the data",
+          content = sprintf(helpText.server[["alertDataLoadNotNumeric"]],
+                            locBadColsTxt),
+          append = FALSE,
+          style = "danger"
+        )
+
+        return(NULL)
+      }
+
+      closeAlert(session, "alertDataLoadNotNumeric")
+
       locDM = as.matrix(locDT)
       rownames(locDM) = loc1stColVal
-      
-      return(locDM)      
+
+      return(locDM)
     }
   })
   
@@ -100,6 +132,8 @@ shinyServer(function(input, output, session) {
     if (locInGen1 != isolate(counter$dataGen1)) {
       cat("dataInBoth: inDataGen1\n")
       dm = myUserDataGenIris()
+      # a complaint about a previously loaded file does not apply to this data
+      closeAlert(session, "alertDataLoadNotNumeric")
       # no need to isolate updating the counter reactive values!
       counter$dataGen1 <- locInGen1
     } else if (locInDataLoad != isolate(counter$dataLoad)) {
