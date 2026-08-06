@@ -143,139 +143,10 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
       ),
     ),
     
-    checkboxInput(ns('chBplotStyle'),
-                  'Adjust plot appearance',
-                  FALSE),
-    conditionalPanel(
-      condition = "input.chBplotStyle",
-      ns = ns,
-      
-      fluidRow(
-        
-        column(4,
-               sliderInput(
-                 ns('slNAcolor'),
-                 'Shade of grey for NA values',
-                 min = 0,
-                 max = 1,
-                 value = 0.8,
-                 step = .1,
-                 ticks = TRUE
-               ),
-               checkboxInput(ns('chBdispGrid'), 
-                             'Display grid lines', 
-                             FALSE),
-               conditionalPanel(
-                 condition = "input.chBdispGrid",
-                 ns = ns,
-                 
-                 sliderInput(
-                   ns('slGridColor'),
-                   'Shade of grey for grid lines',
-                   min = 0,
-                   max = 1,
-                   value = 0.6,
-                   step = .1,
-                   ticks = TRUE)
-               ),
-        ),
-        
-        column(
-          3,
-          selectInput(
-            ns("selectPalette"),
-            label = "Heatmap\'s colour palette:",
-            choices = l.col.pal,
-            selected = 'Spectral'
-          ),
-          checkboxInput(ns('inRevPalette'), 'Reverse colour palette', TRUE),
-        ),
-        column(
-          3,
-          selectInput(
-            ns("selectPaletteDend"),
-            label = "Dendrogram\'s colour palette",
-            choices = l.col.pal.dend,
-            selected = 'Color Blind'
-          ),
-          
-          checkboxInput(ns('selectDend'), 'Plot dendrogram and re-order samples', TRUE),
-        )
-      ),
-      
-      fluidRow(
-        column(
-          2,
-          numericInput(
-            ns('inFontX'),
-            'Font size row labels',
-            10,
-            min = 1,
-            width = 100,
-            step = 1
-          )
-        ),
-        column(
-          2,
-          numericInput(
-            ns('inFontY'),
-            'Font size column labels',
-            10,
-            min = 1,
-            width = 100,
-            step = 1
-          )
-        ),
-        column(3,
-               numericInput(
-                 ns('inPlotHeight'),
-                 'Plot height',
-                 value = 1200,
-                 min = 100,
-                 step = 100
-               )
-        ),
-        column(3,
-               numericInput(
-                 ns('inPlotWidth'),
-                 'Plot width',
-                 value = 800,
-                 min = 100,
-                 step = 100
-               )
-        )
-      )
-    ),
-    
-    checkboxInput(ns('chBdownload'),
-                  'Download plot or data',
-                  FALSE),
-    conditionalPanel(
-      condition = "input.chBdownload",
-      ns = ns,
-      
-      fluidRow(
-        column(3,
-               
-               downloadButton(ns('downClAssSpar'), 'Cluster assignments'),
-               bsTooltip(ns("downClAssSpar"),
-                         helpText.clHierSpar[["downClAss"]],
-                         placement = "top",
-                         trigger = "hover",
-                         options = NULL)
-        ),
-        
-        column(3,
-               
-               downloadButton(ns('downDendSpar'), 'Dendrogram object'),
-               bsTooltip(ns("downDendSpar"),
-                         helpText.clHierSpar[["downDend"]],
-                         placement = "top",
-                         trigger = "hover",
-                         options = NULL))
-      ),
-      downPlotUI(ns('downPlotHierSparPNG'), "")
-    ),
+    myHeatmapStyleUI(ns, 'Spectral'),
+
+    myHeatmapDownloadUI(ns, 'downClAssSpar', 'downDendSpar',
+                        'downPlotHierSparPNG', helpText.clHierSpar),
     
     checkboxInput(ns('inPlotHierSparInteractive'), 
                   'Interactive Plot',  
@@ -442,12 +313,7 @@ clustHierSpar <- function(id, dataMod) {
     )
     
     # Set colors palette for the heatmap
-    if (input$inRevPalette)
-      locColorHM <-
-      rev(colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99))
-    else
-      locColorHM <-
-      colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99)
+    locColorHM = myGetHeatmapColors(input$selectPalette, input$inRevPalette)
     
     # number of clusters at which dendrogram is cut
     locNclust = returnNclust()
@@ -543,12 +409,7 @@ clustHierSpar <- function(id, dataMod) {
     )
     
     # Set colors palette for the heatmap
-    if (input$inRevPalette)
-      locColorHM <-
-      rev(colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99))
-    else
-      locColorHM <-
-      colorRampPalette(brewer.pal(9, input$selectPalette))(n = 99)
+    locColorHM = myGetHeatmapColors(input$selectPalette, input$inRevPalette)
     
     # number of clusters at which dendrogram is cut
     locNclust = returnNclust()

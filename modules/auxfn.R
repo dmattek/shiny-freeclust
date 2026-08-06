@@ -422,6 +422,21 @@ myNbclust <-
 # in.pal - name of a tableau palette, e.g. "Color Blind"
 # in.n   - number of colours required, i.e. the number of clusters
 
+# Build the heatmap's colour ramp from a RColorBrewer palette.
+#
+# Arguments:
+# in.pal - name of a brewer palette, e.g. "RdYlBu"
+# in.rev - reverse the ramp
+
+myGetHeatmapColors = function(in.pal, in.rev = FALSE) {
+  locCol = colorRampPalette(brewer.pal(9, in.pal))(n = 99)
+
+  if (in.rev)
+    locCol = rev(locCol)
+
+  return(locCol)
+}
+
 myGetDendColors = function(in.pal, in.n) {
   if (is.null(in.pal) | is.null(in.n))
     return(NULL)

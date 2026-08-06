@@ -43,6 +43,8 @@ if (length(missing_packages)) {
 
 source('modules/auxfn.R')
 source('modules/downPlot.R')
+# heatmapOpts.R uses downPlotUI, so it has to follow downPlot.R
+source('modules/heatmapOpts.R')
 source('modules/tabHist.R')
 source('modules/tabHier.R')
 source('modules/tabHierSparse.R')
