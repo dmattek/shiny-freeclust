@@ -25,20 +25,25 @@ The app depends on several packages which should be automatically installed when
 - data.table (for fast data processing)
 - pheatmap (provides a static heatmap plot)
 - heatmaply (provides an interactive heatmap)
+- plotly (renders the interactive heatmap)
 - ggplot2 (for plotting in the cluster validation module)
+- ggpubr (provides `ggline` used by the cluster validation plots)
 - RColorBrewer (provides `brewer.pal`)
+- ggthemes (provides the dendrogram colour palettes)
 - sparcl (provides sparse hierarchical and k-means clustering)
 - dtw (provides Dynamic Time Warping)
+- proxy (provides `dist`, including the DTW metric)
+- dendextend (provides `cutree` for dendrograms)
 - factoextra (provides cluster validation)
 
 The complete list of dependencies can also be manually installed from the R console by typing:
 ```
 install.packages(c("shiny", "shinyBS", "shinycssloaders",
-                  "data.table",
-                  "ggplot2", 
-                  "pheatmap", "heatmaply",
+                  "data.table", "magrittr",
+                  "ggplot2", "ggpubr",
+                  "pheatmap", "heatmaply", "plotly",
                   "RColorBrewer", "ggthemes",
-                  "sparcl", "dtw", "factoextra")) 
+                  "sparcl", "dtw", "proxy", "dendextend", "factoextra")) 
 ```
 
 For new R users, once you have installed R, we recommend to use R from Rstudio. It provides an excellent programming interface and makes it slightly easier to run shiny apps with a single click! Instructions for installation can be found on the Rstudio [website](https://rstudio.com/ "External link").

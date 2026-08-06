@@ -9,9 +9,17 @@ required_packages = c(
   "ggplot2", 
   "pheatmap",
   "heatmaply",
-  "RColorBrewer", 
+  "RColorBrewer",
   "ggthemes",
-  "sparcl"
+  "sparcl",
+  # Also required. These are easy to overlook because they are called via ::,
+  # or attached only as a side effect of another package, so do not remove them
+  # on the grounds that no library() call mentions them.
+  "magrittr",    # %>%, attached in tabHist.R
+  "proxy",       # proxy::dist, including the DTW metric that dtw registers
+  "dendextend",  # dendextend::cutree on hclust/dendrogram objects
+  "ggpubr",      # ggpubr::ggline in myNbclust (auxfn.R)
+  "plotly"       # renderPlotly/plotlyOutput; so far attached only via heatmaply's Depends
 )
 
 missing_packages =
