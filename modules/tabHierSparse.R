@@ -34,7 +34,11 @@ helpText.clHierSpar = c(alImportance = paste0("<p>Weight factors (WF) calculated
                                               "<i>A framework for feature selection in clustering</i>; ",
                                               "Journal of the American Statistical Association 105(490): 713-726.</p>"),
                         downClAss = "Download a CSV with cluster assignments to time series ID",
-                        downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.")
+                        downDend = "Download an RDS file with dendrogram object. Read later with readRDS() function.",
+                        butCluster = paste0("Run sparse hierarchical clustering. This is the slowest step in the app, ",
+                                            "so it is not repeated on its own: click again after changing the ",
+                                            "dissimilarity measure, the linkage method, or the advanced options. ",
+                                            "Loading or rescaling the data clears the result."))
 
 
 # UI ----
@@ -55,8 +59,18 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
     
     fluidRow(
       column(
+        2,
+
+        actionButton(ns('butCluster'), 'Cluster!'),
+        bsTooltip(ns("butCluster"),
+                  helpText.clHierSpar[["butCluster"]],
+                  placement = "top",
+                  trigger = "hover")
+      ),
+
+      column(
         4,
-        
+
         sliderInput(
           ns('slNclust'),
           'Number of dendrogram branches to cut',
@@ -283,20 +297,37 @@ clustHierSpar <- function(id, dataMod) {
     return(input$slNclust)
   }) %>% debounce(MILLIS)
   
-  calcHierSpar <- reactive({
-    cat(file = stdout(), 'tabHierSpar:calcHierSpar\n')
-    
+  # Permuting is by far the slowest computation in the app, and it depends on
+  # four inputs, so leaving it reactive means a full re-run on every parameter
+  # nudge. Hold the result instead and recompute it only when asked.
+  locClustRes <- reactiveVal(NULL)
+
+  # A result only describes the data it was computed from. Drop it whenever the
+  # data changes - including a rescale or a trim applied in the Histogram tab -
+  # so that a dendrogram is never drawn over values it did not come from.
+  observeEvent(dataMod(), {
+    cat(file = stdout(), 'tabHierSpar:observeEvent:dataMod\n')
+
+    locClustRes(NULL)
+  }, ignoreNULL = FALSE)
+
+  observeEvent(input$butCluster, {
+    cat(file = stdout(), 'tabHierSpar:observeEvent:butCluster\n')
+
     locDM = dataMod()
-    if (is.null(locDM))
+
+    if (is.null(locDM)) {
+      locClustRes(NULL)
       return(NULL)
-    
+    }
+
     perm.out <- HierarchicalSparseCluster.permute(
       locDM,
       wbounds = NULL,
       nperms = input$inHierSparNperms,
       dissimilarity = input$selectDist
     )
-    
+
     sparsehc <- HierarchicalSparseCluster(
       dists = perm.out$dists,
       wbound = perm.out$bestw,
@@ -304,7 +335,14 @@ clustHierSpar <- function(id, dataMod) {
       method = input$selectLinkage,
       dissimilarity = input$selectDist
     )
-    return(sparsehc)
+
+    locClustRes(sparsehc)
+  })
+
+  calcHierSpar <- reactive({
+    cat(file = stdout(), 'tabHierSpar:calcHierSpar\n')
+
+    return(locClustRes())
   })
   
   
@@ -378,7 +416,7 @@ clustHierSpar <- function(id, dataMod) {
     
     validate(
       need(!is.null(locDM), "Nothing to plot. Load data first!"),
-      need(!is.null(locHC), "Did not perform clustering.")
+      need(!is.null(locHC), "Click Cluster! to run sparse hierarchical clustering.")
     )
     
     # Set colors palette for the heatmap
@@ -479,7 +517,7 @@ clustHierSpar <- function(id, dataMod) {
     
     validate(
       need(!is.null(locDM), "Nothing to plot. Load data first!"),
-      need(!is.null(locHC), "Did not perform clustering")
+      need(!is.null(locHC), "Click Cluster! to run sparse hierarchical clustering.")
     )
     
     # Set colors palette for the heatmap
