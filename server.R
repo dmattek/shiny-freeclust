@@ -36,13 +36,6 @@ shinyServer(function(input, output, session) {
   #   shinyjs::reset("fileDataLoad")  # reset is a shinyjs function
   # })
   
-  # generate random dataset 1
-  dataGen1 <- eventReactive(input$butDataGen1, {
-    cat("dataGen1\n")
-    
-    return(myUerDataGenIris())
-  })
-  
   ## Load data ----
   # load main data file; 
   # return a matrix with samples as rows, measurements/features as columns

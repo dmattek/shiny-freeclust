@@ -321,6 +321,36 @@ myNbclust <-
 
 # Custom plotting functions ----
 
+# Return in.n colours from a tableau palette in l.col.pal.dend,
+# named 1..in.n to match cluster numbers.
+#
+# Palettes offered in the UI hold between 5 ("Seattle Grays") and 20
+# ("Tableau 20") colours, whereas dendrograms can be cut into up to MAXNCLUST
+# branches. When more colours are requested than the palette holds, ggthemes
+# warns and pads the result with NAs, which pheatmap and heatmaply then render
+# as blank annotations. Recycle the palette instead, so that every cluster
+# receives a colour and the palette chosen in the UI is always the one used.
+#
+# Arguments:
+# in.pal - name of a tableau palette, e.g. "Color Blind"
+# in.n   - number of colours required, i.e. the number of clusters
+
+myGetDendColors = function(in.pal, in.n) {
+  if (is.null(in.pal) | is.null(in.n))
+    return(NULL)
+
+  if (in.n < 1)
+    return(NULL)
+
+  # Drop the NA padding that ggthemes adds when in.n exceeds the palette,
+  # then recycle the remaining colours up to in.n.
+  locCol = suppressWarnings(ggthemes::tableau_color_pal(in.pal)(n = in.n))
+  locCol = rep_len(locCol[!is.na(locCol)], in.n)
+  names(locCol) = seq_len(in.n)
+
+  return(locCol)
+}
+
 
 #' Custom ggPlot theme based on theme_bw
 #'

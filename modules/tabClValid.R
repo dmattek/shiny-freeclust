@@ -145,7 +145,7 @@ clustValidUI <- function(id, label = "Validation") {
                           'Number of clusters to evaluate',
                           min = 2,
                           max = MAXNCLUST,
-                          value = 1,
+                          value = 2,
                           step = 1,
                           ticks = TRUE,
                           round = TRUE
@@ -315,24 +315,21 @@ clustValid <- function(input, output, session, inDataWide) {
   
   # PCA visualization of partitioning methods 
   plotClPCA <- function() {
-    cat(file = stdout(), 'plotTree: in\n')
-    
+    cat(file = stdout(), 'plotClPCA: in\n')
+
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
-    
+
     # until clicking the Plot button
     locPart = calcDendCut()
     locDM = inDataWide()
-    
+
     validate(
       need(!is.null(locPart), "Nothing to plot. Load data first!"),
       need(!is.null(locDM),   "Nothing to plot. Load data first!"),
-      need(sum(is.na(locDM)), "Cannot calculate PCA in the presence of missing data and/or NAs.")
-    )    
-    
-    if (sum(is.na(locDM)) > 0)
-      return(NULL)
-    
+      need(sum(is.na(locDM)) == 0, "Cannot calculate PCA in the presence of missing data and/or NAs.")
+    )
+
     # Tha tableau "Color Blind" palette has only 10 colours; 
     # change to "Tableau 20" if more clusters requested
     locPal = ifelse(returnNclust() <= 10, "Color Blind", "Tableau 20")
@@ -370,17 +367,21 @@ clustValid <- function(input, output, session, inDataWide) {
     # make the f-n dependent on the button click
     locBut = input$butPlotInt
     
-    # Check if required data exists
+    # Check if required data exists.
+    # Validate before calling plotClPCA below: that function validates the
+    # absence of NAs itself, and its message would otherwise surface here.
     locPart = calcDendCut()
-    
-    # Rerun the PCA plot to obtain clour mapping of clusters in PCA and silhouette plot and match it with dendrogram colors.
-    loc.map = plotClPCA()
-    
+    locDM = inDataWide()
+
     validate(
       need(!is.null(locPart), "Nothing to plot. Load data first!"),
-      need(!is.null(loc.map),  "Cannot assign colours to clusters. Possible NAs in the dataset!")
-    )    
-    
+      need(!is.null(locDM),   "Nothing to plot. Load data first!"),
+      need(sum(is.na(locDM)) == 0, "Cannot assign colours to clusters. Possible NAs in the dataset!")
+    )
+
+    # Rerun the PCA plot to obtain clour mapping of clusters in PCA and silhouette plot and match it with dendrogram colors.
+    loc.map = plotClPCA()
+
     # Determine cluster order of occurence from left to right in the dendrogram
     # This is necessary because fviz_dend colors clusters from left to right,
     # whereas fviz_silhouette and fviz_cluster use the order of cluster first occurence in the list of individuals.

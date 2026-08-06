@@ -94,8 +94,9 @@ clustHierSparUI <- function(id, label = "Sparse Hierarchical CLustering") {
                         ),
                         selected = 1),
                ),
-             ),
-             bsAlert("alertAnchorClHierNAsPresent"),
+             )
+             # No alert anchor here: sparcl clusters data containing NAs,
+             # so this tab intentionally performs no missing-value check.
       ),
     ),
     
@@ -390,8 +391,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
     locNclust = returnNclust()
     
     # make a palette for the dendrogram with the amount of colours equal to the number of clusters
-    locColorDend = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = locNclust)
-    names(locColorDend) = seq(1, locNclust, 1)
+    locColorDend = myGetDendColors(input$selectPaletteDend, locNclust)
     
     # Create row-side annotations
     locRowAnnotation <- as.data.frame(
@@ -492,8 +492,7 @@ clustHierSpar <- function(input, output, session, dataMod) {
     locNclust = returnNclust()
     
     # make a palette for the dendrogram with the amount of colours equal to the number of clusters
-    locColorDend = ggthemes::tableau_color_pal(input$selectPaletteDend)(n = locNclust)
-    names(locColorDend) = seq(1, locNclust, 1)
+    locColorDend = myGetDendColors(input$selectPaletteDend, locNclust)
     
     # Create row-side annotations
     locDend = as.dendrogram(locHC[["hc"]])
